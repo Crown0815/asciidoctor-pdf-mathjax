@@ -10,7 +10,7 @@ Gem::Specification.new do |spec|
   spec.required_ruby_version = '>= 3.0'
 
   spec.files = Dir['lib/**/*', 'bin/**/*']
-  spec.executables   = ['mathjax-render.js']
+  spec.executables   = ['render.js']
   spec.require_paths = ['lib']
 
   spec.add_dependency 'asciidoctor', '~> 2.0'

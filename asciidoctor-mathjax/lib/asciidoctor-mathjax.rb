@@ -3,41 +3,51 @@ require 'asciidoctor/extensions'
 require 'open3'
 require 'fileutils'
 
-class MathJaxTreeprocessor < Asciidoctor::Extensions::Treeprocessor
+class MathJaxTreeProcessor < Asciidoctor::Extensions::TreeProcessor
   def initialize(*args)
     super
     @temp_dir = File.join(Dir.tmpdir, 'asciidoctor-pdf-mathjax')
     FileUtils.mkdir_p(@temp_dir)
+    puts "DEBUG: MathJaxTreeProcessor initialized with temp_dir: #{@temp_dir}"
   end
 
   def process(document)
+    puts "DEBUG: Processing document with #{document.attributes.keys.length} attributes"
+    math_nodes = document.find_by(context: :stem)
+    unless math_nodes
+      puts "DEBUG: No STEM nodes found in document"
+      return
+    end
 
-    puts "DEBUG: Hello from MathJaxTreeprocessor"
-    # Find all math nodes (block and inline STEM)
-    math_nodes = document.find_by(context: :stem) { |node| node.style == :latexmath }
-    return unless math_nodes
+    latex_nodes = math_nodes.select { |node| node.style == :latexmath }
+    math_nodes.each do |node|
+      puts "DEBUG: Found STEM node with style: #{node.style || 'none'}" unless node.style == :latexmath
+    end
+    puts "DEBUG: Found #{latex_nodes.length} LaTeX math nodes"
 
-    math_nodes.each_with_index do |node, index|
-      # Determine desired font size based on context
+    latex_nodes.each_with_index do |node, index|
+      puts "DEBUG: Processing node ##{index}: #{node.content[0..20]}..."
       desired_font_size = get_desired_font_size(node, document)
+      puts "DEBUG: Desired font size for node ##{index}: #{desired_font_size}pt"
 
-      # Generate SVG with fixed font size (12pt)
       fixed_font_size = 12
       svg_file = File.join(@temp_dir, "mathjax_svg_#{index}.svg")
       generate_svg(node.content, fixed_font_size, svg_file)
 
-      # Read SVG dimensions
       svg_width, svg_height = extract_svg_dimensions(svg_file)
-      next unless svg_width && svg_height
+      if svg_width && svg_height
+        puts "DEBUG: SVG dimensions for node ##{index}: #{svg_width}x#{svg_height}"
+        scaling_factor = desired_font_size.to_f / fixed_font_size
+        scaled_width = svg_width * scaling_factor
+        scaled_height = svg_height * scaling_factor
+        puts "DEBUG: Scaled dimensions for node ##{index}: #{scaled_width.round(2)}x#{scaled_height.round(2)}"
 
-      # Calculate scaling factor
-      scaling_factor = desired_font_size.to_f / fixed_font_size
-      scaled_width = svg_width * scaling_factor
-      scaled_height = svg_height * scaling_factor
-
-      # Create image node
-      image_node = create_image_node(node, document, svg_file, scaled_width, scaled_height)
-      node.parent.replace(node, image_node)
+        image_node = create_image_node(node, document, svg_file, scaled_width, scaled_height)
+        node.parent.replace(node, image_node)
+        puts "DEBUG: Replaced node ##{index} with image node targeting #{svg_file}"
+      else
+        puts "DEBUG: Skipping node ##{index} due to missing SVG dimensions"
+      end
     end
 
     document
@@ -45,58 +55,55 @@ class MathJaxTreeprocessor < Asciidoctor::Extensions::Treeprocessor
 
   private
 
-  # Determine font size based on node context
   def get_desired_font_size(node, document)
     base_font_size = (document.attributes['base-font-size'] || 10).to_f
-    if node.context == :stem && node.parent.context == :paragraph # Inline
+    if node.context == :stem && node.parent.context == :paragraph
       document.attributes['math-inline-font-size']&.to_f || base_font_size
-    else # Block
-      document.attributes['math-block-font-size']&.to_f || base_font_size * 1.2 # Slightly larger for blocks
+    else
+      document.attributes['math-block-font-size']&.to_f || base_font_size * 1.2
     end
   end
 
-  # Generate SVG using MathJax via Node.js script
   def generate_svg(expression, font_size, output_file)
-    js_script = File.join(File.dirname(__FILE__), '../mathjax/render.js')
+    js_script = File.join(File.dirname(__FILE__), '../bin/render.js')
     cmd = "node #{js_script} #{font_size} \"#{escape_expression(expression)}\" #{output_file}"
+    puts "DEBUG: Executing MathJax command: #{cmd}"
     stdout, stderr, status = Open3.capture3(cmd)
     unless status.success?
-      warn "MathJax rendering failed: #{stderr}"
+      puts "DEBUG: MathJax rendering failed for '#{expression[0..20]}...': #{stderr}"
       return nil
     end
+    puts "DEBUG: Generated SVG at #{output_file}"
     output_file
   end
 
-  # Extract width and height from SVG
   def extract_svg_dimensions(svg_file)
     svg_content = File.read(svg_file)
     if svg_content =~ /width="([\d.]+)(?:ex|px)"\s+height="([\d.]+)(?:ex|px)"/
       width, height = $1.to_f, $2.to_f
-      # Convert ex to pt (approx 1 ex = 0.5em, 1em ≈ 12pt base, adjust as needed)
-      [width * 6, height * 6] # Rough conversion assuming 1ex ≈ 6pt
+      [width * 6, height * 6]
     else
-      warn "Could not extract dimensions from SVG: #{svg_file}"
+      puts "DEBUG: Could not extract dimensions from SVG: #{svg_file}"
       nil
     end
   end
 
-  # Create an image node for PDF inclusion
   def create_image_node(node, document, svg_file, width, height)
     image_node = Asciidoctor::Block.new(document, :image, source: "image::#{svg_file}[]")
     image_node.attributes['target'] = svg_file
-    image_node.attributes['width'] = width.round(2).to_s # In points
-    image_node.attributes['height'] = height.round(2).to_s # In points
+    image_node.attributes['width'] = width.round(2).to_s
+    image_node.attributes['height'] = height.round(2).to_s
     image_node.attributes['alt'] = 'Math expression'
     image_node
   end
 
-  # Escape expression for shell execution
   def escape_expression(expr)
     expr.gsub('"', '\\"')
   end
 end
 
-# Register the extension
+# Register the extension with debug message
 Asciidoctor::Extensions.register do
-  tree_processor MathJaxTreeprocessor
+  puts "DEBUG: Registering MathJaxTreeProcessor extension"
+  tree_processor MathJaxTreeProcessor
 end
