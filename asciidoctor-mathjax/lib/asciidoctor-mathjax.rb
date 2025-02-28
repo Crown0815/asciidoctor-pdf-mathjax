@@ -19,13 +19,12 @@ class MathJaxTreeProcessor < Asciidoctor::Extensions::TreeProcessor
       return
     end
 
-    latex_nodes = math_nodes.select { |node| node.style == :latexmath }
+    puts "DEBUG: Found #{math_nodes.length} STEM nodes"
     math_nodes.each do |node|
-      puts "DEBUG: Found STEM node with style: #{node.style || 'none'}" unless node.style == :latexmath
+      puts "DEBUG: Node style: #{node.style || 'none'}"
     end
-    puts "DEBUG: Found #{latex_nodes.length} LaTeX math nodes"
 
-    latex_nodes.each_with_index do |node, index|
+    math_nodes.each_with_index do |node, index|
       puts "DEBUG: Processing node ##{index}: #{node.content[0..20]}..."
       desired_font_size = get_desired_font_size(node, document)
       puts "DEBUG: Desired font size for node ##{index}: #{desired_font_size}pt"
