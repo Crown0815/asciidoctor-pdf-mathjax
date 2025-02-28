@@ -2,6 +2,8 @@
 
 set -euo pipefail
 
+gem install ./asciidoctor-mathjax-test.gem
+
 asciidoctor-pdf \
       --require asciidoctor-mathjax \
       --attribute stem=latexmath \

@@ -2,6 +2,7 @@ require 'asciidoctor'
 require 'asciidoctor/extensions'
 require 'open3'
 require 'fileutils'
+require 'nokogiri'
 
 class MathJaxTreeProcessor < Asciidoctor::Extensions::TreeProcessor
   LineFeed = %(\n)
@@ -77,7 +78,7 @@ class MathJaxTreeProcessor < Asciidoctor::Extensions::TreeProcessor
 
     desired_font_size = get_desired_font_size(stem, false)
     puts "DEBUG: Desired font size: #{desired_font_size}"
-    img_target = generate_svg content, stem.id, false, desired_font_size, image_output_dir, image_target_dir
+    img_target, _ = generate_svg content, stem.id, false, desired_font_size, image_output_dir, image_target_dir
     puts "DEBUG: Generated SVG at #{img_target}"
 
     parent = stem.parent
@@ -144,9 +145,27 @@ class MathJaxTreeProcessor < Asciidoctor::Extensions::TreeProcessor
         desired_font_size = get_desired_font_size(node, true)
         puts "DEBUG: Desired font size: #{desired_font_size}"
 
-        img_target = generate_svg eq_data, nil, true, desired_font_size, image_output_dir, image_target_dir
+        img_target, img_file = generate_svg eq_data, nil, true, desired_font_size, image_output_dir, image_target_dir
 
-        %(image:#{img_target}[]) # removed width and height [width=#{img_width},height=#{img_height}]
+        svg_width = get_svg_width(img_file)
+        puts "SVG Width: #{svg_width} units (likely pixels)"
+
+        pdf_line_width = get_pdf_line_width(document)
+        puts "PDF Line Width: #{pdf_line_width} pt"
+
+        if svg_width > 0
+          base_font_size = (document.attributes['base-font-size'] || 10).to_f
+          ratio = 6 * svg_width / pdf_line_width / 12 * base_font_size * 100
+          puts "Ratio of SVG width to PDF line width: #{ratio}"
+          puts "Replacing #{eq_data} with image:#{img_target}[width=#{ratio}%]"
+          %(image:#{img_target}[width=#{ratio}%]) # removed width and height [width=#{img_width},height=#{img_height}]
+        else
+          puts "Could not determine SVG width for #{img_target}"
+          puts
+          %(image:#{img_target}[]) # removed width and height [width=#{img_width},height=#{img_height}]
+        end
+
+#         %(image:#{img_target}[width=13%]) # removed width and height [width=#{img_width},height=#{img_height}]
       end
     end
 
@@ -161,6 +180,34 @@ class MathJaxTreeProcessor < Asciidoctor::Extensions::TreeProcessor
     else
       base_font_size * 1.2
     end
+  end
+
+  def get_svg_width(svg_file)
+    puts "DEBUG: Attempting to get SVG width for #{svg_file}"
+    return 0 unless File.exist?(svg_file)
+    puts "DEBUG: Getting SVG width for #{svg_file}"
+    svg_content = File.read(svg_file)
+    doc = Nokogiri::XML(svg_content)
+    svg_element = doc.at('svg')
+
+    width = svg_element['width']&.to_f || 0
+    if width.zero? && svg_element['viewBox']
+      viewbox = svg_element['viewBox'].split
+      width = viewbox[2].to_f
+    end
+    width
+  end
+
+  def get_pdf_line_width(document)
+    # Default A4 page width in points (595 pt)
+    page_width = document.attr('pdf-page-size', '595').to_f
+
+    # Get margins (default 36 pt if not specified)
+    margin_left = document.attr('pdf-margin-left', '36').to_f
+    margin_right = document.attr('pdf-margin-right', '36').to_f
+
+    # Calculate usable width
+    page_width - margin_left - margin_right
   end
 
   def generate_svg(equ_data, equ_id, equ_inline, font_size, image_output_dir, image_target_dir)
@@ -184,7 +231,7 @@ class MathJaxTreeProcessor < Asciidoctor::Extensions::TreeProcessor
     puts "DEBUG: Generated SVG at #{img_file}"
 
     img_target = ::File.join image_target_dir, img_target unless image_target_dir == '.'
-    img_target
+    [img_target, img_file]
   end
 
   def extract_svg_dimensions(svg_file)
