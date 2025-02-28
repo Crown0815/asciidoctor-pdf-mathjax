@@ -42,7 +42,14 @@ class MathJaxTreeProcessor < Asciidoctor::Extensions::TreeProcessor
         puts "DEBUG: Scaled dimensions for node ##{index}: #{scaled_width.round(2)}x#{scaled_height.round(2)}"
 
         image_node = create_image_node(node, document, svg_file, scaled_width, scaled_height)
-        node.parent.replace(node, image_node)
+        if node.parent.is_a?(Asciidoctor::Document)
+          puts "DEBUG: Node ##{index} is top-level, removing and appending to document"
+          document.blocks.delete(node) # Remove the original node
+          document.blocks << image_node # Append the new image node
+        else
+          puts "DEBUG: Replacing node ##{index} within parent block"
+          node.parent.replace(node, image_node)
+        end
         puts "DEBUG: Replaced node ##{index} with image node targeting #{svg_file}"
       else
         puts "DEBUG: Skipping node ##{index} due to missing SVG dimensions"
