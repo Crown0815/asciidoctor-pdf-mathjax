@@ -6,4 +6,17 @@
 E = mc^2
 ++++
 
-Inline example: stem:[x^2 + y^2 = z^2]
+== Inline example: stem:[x^2 + y^2 = z^2]
+
+this is soem text
+Inline example: stem:[x^2 = z] and a little more test
+
+and a little more test
+
+Inline example: stem:[\frac{x^2}{y^2}] adasfa
+
+and a little more test
+
+Inline example: stem:[x_1^2 + y_1^2 = z_1^2]  dafdas
+
+Inline example: image:../media/stem-5eb18ae6a818727fce7e24d614956e1d.svg[width=12.124282982791586%]

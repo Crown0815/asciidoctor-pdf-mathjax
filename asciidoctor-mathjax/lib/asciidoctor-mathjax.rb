@@ -29,9 +29,9 @@ class MathJaxTreeProcessor < Asciidoctor::Extensions::TreeProcessor
       handle_prose_block prose, image_output_dir, image_target_dir
     end
 
-#     (document.find_by content: :section).each do |sect|
-#       handle_section_title sect, mathematical, image_output_dir, image_target_dir, format, inline
-#     end
+    (document.find_by content: :section).each do |sect|
+      handle_section_title sect, image_output_dir, image_target_dir
+    end
 
     document.remove_attr 'stem'
     (document.instance_variable_get :@header_attributes).delete 'stem' rescue nil
@@ -113,6 +113,12 @@ class MathJaxTreeProcessor < Asciidoctor::Extensions::TreeProcessor
     end
   end
 
+  def handle_section_title(sect, image_output_dir, image_target_dir)
+    text = sect.instance_variable_get :@title
+    text, source_modified = handle_inline_stem sect, text, image_output_dir, image_target_dir
+    sect.title = text if source_modified
+  end
+
   def handle_inline_stem(node, text, image_output_dir, image_target_dir)
     document = node.document
     source_modified = false
@@ -154,18 +160,14 @@ class MathJaxTreeProcessor < Asciidoctor::Extensions::TreeProcessor
         puts "PDF Line Width: #{pdf_line_width} pt"
 
         if svg_width > 0
-          base_font_size = (document.attributes['base-font-size'] || 10).to_f
-          ratio = 6 * svg_width / pdf_line_width / 12 * base_font_size * 100
-          puts "Ratio of SVG width to PDF line width: #{ratio}"
-          puts "Replacing #{eq_data} with image:#{img_target}[width=#{ratio}%]"
-          %(image:#{img_target}[width=#{ratio}%]) # removed width and height [width=#{img_width},height=#{img_height}]
+          font_size = node.attr('font-size', 10).to_f
+          ratio = 6 * svg_width / pdf_line_width / 12 * font_size * 100
+          puts "DEBUG: Ratio of SVG width to PDF line width: #{ratio} to match font size #{font_size}"
+          %(image:#{img_target}[width=#{ratio}%])
         else
           puts "Could not determine SVG width for #{img_target}"
-          puts
-          %(image:#{img_target}[]) # removed width and height [width=#{img_width},height=#{img_height}]
+          %(image:#{img_target}[])
         end
-
-#         %(image:#{img_target}[width=13%]) # removed width and height [width=#{img_width},height=#{img_height}]
       end
     end
 
