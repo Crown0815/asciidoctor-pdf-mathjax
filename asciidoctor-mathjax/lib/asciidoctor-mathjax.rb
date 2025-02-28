@@ -15,7 +15,7 @@ class MathJaxTreeProcessor < Asciidoctor::Extensions::TreeProcessor
     puts "DEBUG: Processing document with #{document.attributes.keys.length} attributes"
     math_nodes = document.find_by do |node|
       (node.is_a?(Asciidoctor::Block) && node.context == :stem) ||
-      (node.is_a?(Asciidoctor::Inline) && node.type == "stem")
+      (node.is_a?(Asciidoctor::Inline) && node.context == :inline && node.text =~ /^stem:/)
     end
     unless math_nodes
       puts "DEBUG: No STEM nodes found in document"
@@ -23,18 +23,16 @@ class MathJaxTreeProcessor < Asciidoctor::Extensions::TreeProcessor
     end
 
     puts "DEBUG: Found #{math_nodes.length} STEM nodes"
-    math_nodes.each do |node|
-      puts "DEBUG: Node style: #{node.style || 'none'}"
-    end
-
-    index = 0
-    math_nodes.each do |node|
-      puts "DEBUG: Processing node ##{index}: #{node.content[0..20]}..."
+    math_nodes.each_with_index do |node, index|
+      content = node.is_a?(Asciidoctor::Inline) ? node.text.sub(/^stem:/, '').tr('[]', '') : node.content
+      puts "DEBUG: Processing node ##{index}: #{content[0..20]}..."
       desired_font_size = get_desired_font_size(node, document)
       puts "DEBUG: Desired font size for node ##{index}: #{desired_font_size}pt"
+
       fixed_font_size = 12
       svg_file = File.join(@temp_dir, "mathjax_svg_#{index}.svg")
-      generate_svg(node.content, fixed_font_size, svg_file)
+      generate_svg(content, fixed_font_size, svg_file)
+
       svg_width, svg_height = extract_svg_dimensions(svg_file)
       if svg_width && svg_height
         puts "DEBUG: SVG dimensions for node ##{index}: #{svg_width}x#{svg_height}"
@@ -42,12 +40,13 @@ class MathJaxTreeProcessor < Asciidoctor::Extensions::TreeProcessor
         scaled_width = svg_width * scaling_factor
         scaled_height = svg_height * scaling_factor
         puts "DEBUG: Scaled dimensions for node ##{index}: #{scaled_width.round(2)}x#{scaled_height.round(2)}"
+
         if node.is_a?(Asciidoctor::Block)
           image_node = create_image_node(node, document, svg_file, scaled_width, scaled_height)
           if node.parent.is_a?(Asciidoctor::Document)
             puts "DEBUG: Node ##{index} is top-level, removing and appending to document"
             document.blocks.delete(node)
-            document.blocks << image_node
+            document.keys << image_node
           else
             puts "DEBUG: Replacing node ##{index} within parent block"
             node.parent.replace(node, image_node)
@@ -63,7 +62,6 @@ class MathJaxTreeProcessor < Asciidoctor::Extensions::TreeProcessor
       else
         puts "DEBUG: Skipping node ##{index} due to missing SVG dimensions"
       end
-      index += 1
     end
 
     document
@@ -73,7 +71,7 @@ class MathJaxTreeProcessor < Asciidoctor::Extensions::TreeProcessor
 
   def get_desired_font_size(node, document)
     base_font_size = (document.attributes['base-font-size'] || 10).to_f
-    if node.is_a?(Asciidoctor::Inline) && node.type == "stem"
+    if node.is_a?(Asciidoctor::Inline) && node.text =~ /^stem:/
       document.attributes['math-inline-font-size']&.to_f || base_font_size
     else
       document.attributes['math-block-font-size']&.to_f || base_font_size * 1.2
@@ -95,9 +93,9 @@ class MathJaxTreeProcessor < Asciidoctor::Extensions::TreeProcessor
 
   def extract_svg_dimensions(svg_file)
     svg_content = File.read(svg_file)
-    if svg_content =~ /width="([\d.]+)px"\s+height="([\d.]+)px"/
+    if svg_content =~ /width="([\d.]+)(?:ex|px)"\s+height="([\d.]+)(?:ex|px)"/
       width, height = $1.to_f, $2.to_f
-      [width, height]  # Assuming px = points in PDF at 72 DPI
+      [width * 6, height * 6]
     else
       puts "DEBUG: Could not extract dimensions from SVG: #{svg_file}"
       nil
@@ -105,8 +103,6 @@ class MathJaxTreeProcessor < Asciidoctor::Extensions::TreeProcessor
   end
 
   def create_image_node(node, document, svg_file, width, height)
-
-    puts "DEBUG: Creating image node"
     image_node = Asciidoctor::Block.new(document, :image, source: "image::#{svg_file}[]")
     image_node.attributes['target'] = svg_file
     image_node.attributes['width'] = width.round(2).to_s
@@ -116,7 +112,6 @@ class MathJaxTreeProcessor < Asciidoctor::Extensions::TreeProcessor
   end
 
   def create_inline_image_node(node, document, svg_file, width, height)
-    puts "DEBUG: Creating inline image node"
     attributes = {
       "width" => width.round(2).to_s,
       "height" => height.round(2).to_s,
