@@ -4,12 +4,8 @@ require 'open3'
 require 'fileutils'
 
 class MathJaxTreeProcessor < Asciidoctor::Extensions::TreeProcessor
-  def initialize(*args)
-    super
-    @temp_dir = File.join(Dir.tmpdir, 'asciidoctor-pdf-mathjax')
-    FileUtils.mkdir_p(@temp_dir)
-    puts "DEBUG: MathJaxTreeProcessor initialized with temp_dir: #{@temp_dir}"
-  end
+  LineFeed = %(\n)
+  StemInlineMacroRx = /\\?(stem|(?:latex|ascii)math):([a-z,]*)\[(.*?[^\\])\]/m
 
   def process document
     return unless document.attr? 'stem'
@@ -26,11 +22,11 @@ class MathJaxTreeProcessor < Asciidoctor::Extensions::TreeProcessor
       handle_stem_block stem, image_output_dir, image_target_dir
     end
 
-#     document.find_by(traverse_documents: true) {|b|
-#       (b.content_model == :simple && (b.subs.include? :macros)) || b.context == :list_item
-#     }.each do |prose|
-#       handle_prose_block prose, document, image_output_dir, image_target_dir
-#     end
+    document.find_by(traverse_documents: true) {|b|
+      (b.content_model == :simple && (b.subs.include? :macros)) || b.context == :list_item
+    }.each do |prose|
+      handle_prose_block prose, image_output_dir, image_target_dir
+    end
 
 #     (document.find_by content: :section).each do |sect|
 #       handle_section_title sect, mathematical, image_output_dir, image_target_dir, format, inline
@@ -79,7 +75,7 @@ class MathJaxTreeProcessor < Asciidoctor::Extensions::TreeProcessor
 
     puts "DEBUG: Processing stem block with content: #{content}"
 
-    desired_font_size = get_desired_font_size(stem)
+    desired_font_size = get_desired_font_size(stem, false)
     puts "DEBUG: Desired font size: #{desired_font_size}"
     img_target = generate_svg content, stem.id, false, desired_font_size, image_output_dir, image_target_dir
     puts "DEBUG: Generated SVG at #{img_target}"
@@ -106,7 +102,7 @@ class MathJaxTreeProcessor < Asciidoctor::Extensions::TreeProcessor
     else
       text = prose.lines * LineFeed
     end
-    text, source_modified = handle_inline_stem prose, text, mathematical, image_output_dir, image_target_dir, format, inline
+    text, source_modified = handle_inline_stem prose, text, image_output_dir, image_target_dir
     if source_modified
       if use_text_property
         prose.text = text
@@ -116,7 +112,7 @@ class MathJaxTreeProcessor < Asciidoctor::Extensions::TreeProcessor
     end
   end
 
-  def handle_inline_stem(node, text, mathematical, image_output_dir, image_target_dir, format, inline)
+  def handle_inline_stem(node, text, image_output_dir, image_target_dir)
     document = node.document
     source_modified = false
 
@@ -145,25 +141,25 @@ class MathJaxTreeProcessor < Asciidoctor::Extensions::TreeProcessor
         end
 
         source_modified = true
-        img_target, img_width, img_height = make_equ_image eq_data, nil, true, mathematical, image_output_dir, image_target_dir, format, inline
-        if inline
-          %(pass:[<span class="steminline">#{img_target}</span>])
-        else
-          %(image:#{img_target}[width=#{img_width},height=#{img_height}])
-        end
+        desired_font_size = get_desired_font_size(node, true)
+        puts "DEBUG: Desired font size: #{desired_font_size}"
+
+        img_target = generate_svg eq_data, nil, true, desired_font_size, image_output_dir, image_target_dir
+
+        %(image:#{img_target}[]) # removed width and height [width=#{img_width},height=#{img_height}]
       end
     end
 
     [text, source_modified]
   end
 
-  def get_desired_font_size(node)
+  def get_desired_font_size(node, is_inline)
     document = node.document
     base_font_size = (document.attributes['base-font-size'] || 10).to_f
-    if node.is_a?(Asciidoctor::Inline) && node.type == :stem
-      document.attributes['math-inline-font-size']&.to_f || base_font_size
+    if is_inline
+      base_font_size
     else
-      document.attributes['math-block-font-size']&.to_f || base_font_size * 1.2
+      base_font_size * 1.2
     end
   end
 
