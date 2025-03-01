@@ -1,0 +1,25 @@
+extends: base
+
+brand:
+    text-color: #313331
+
+page:
+    size: A4
+    margin: [2.27cm, 1.27cm, 1.27cm, 1.27cm]
+
+base:
+    font-color: $brand-text-color
+    font-size: 12
+    text-align: justify
+
+title-page:
+    text-align: left
+    title:
+        font-color: $base-font-color
+        font-style: bold
+        font-size: 24
+
+abstract:
+    title:
+        font-size: 20
+    font-size: ~

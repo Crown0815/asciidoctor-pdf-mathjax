@@ -1,0 +1,2 @@
+// See https://intellij-asciidoc-plugin.ahus1.de/docs/users-guide/features/advanced/asciidoctorconfig-file.html
+:root: {asciidoctorconfigdir}/

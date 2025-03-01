@@ -1,12 +1,13 @@
-= Test Document
+= Test Document stem:[x^2 + y^2 = z^2]
 :stem: latexmath
+:pdf-themesdir: {root}/theme
+:pdf-theme: test
+:imagesdir: {root}/media
 
 [stem]
 ++++
 E = mc^2
 ++++
-
-== Inline example: stem:[x^2 + y^2 = z^2]
 
 this is soem text
 Inline example: stem:[x^2 = z] and a little more test
