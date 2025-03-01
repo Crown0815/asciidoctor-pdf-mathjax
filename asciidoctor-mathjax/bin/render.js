@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 const mjAPI = require("mathjax-node");
 const fs = require("fs");
 
