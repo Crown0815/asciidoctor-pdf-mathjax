@@ -6,17 +6,14 @@ class AsciidoctorPDFExtensions < (Asciidoctor::Converter.for 'pdf')
   register_for 'pdf'
 
   def convert_stem node
-    puts "DEBUG: arrange_block"
     arrange_block node do |extent|
-      puts "DEBUG: add_dest_for_block"
       add_dest_for_block node if node.id
-      puts "DEBUG: tare_first_page_content_stream"
 
       latex_content = node.content.strip
       svg_output, error = stem_to_svg(latex_content)
 
       if svg_output.nil? || svg_output.empty?
-        warn "Failed to convert STEM to SVG: #{error}"
+        warn "Failed to convert STEM to SVG: #{error} (Fallback to code block)"
         pad_box @theme.code_padding, node do
           theme_font :code do
             typeset_formatted_text [{ text: (guard_indentation latex_content), color: @font_color }],
@@ -25,25 +22,21 @@ class AsciidoctorPDFExtensions < (Asciidoctor::Converter.for 'pdf')
           end
         end
       else
-        puts "DEBUG: Writing SVG to temporary file"
+        puts "DEBUG: Successfully converted STEM to SVG"
+        puts "DEBUG: SVG output: #{svg_output}..."
         svg_file = Tempfile.new(['stem', '.svg'])
         begin
           svg_file.write(svg_output)
           svg_file.close
 
-          puts "DEBUG: SVG file path: #{svg_file.path}"
-          puts "DEBUG: SVG file size: #{File.size(svg_file.path)} bytes"
-
           pad_box @theme.code_padding, node do
             begin
               image_obj = image svg_file.path, position: :center
-              puts "DEBUG: Image object type: #{image_obj.class}"
-              puts "DEBUG: Image object content: #{image_obj.inspect}"
-              puts "DEBUG: Image embedded successfully" if image_obj
+              puts "DEBUG: Successfully embedded SVG image" if image_obj
             rescue Prawn::Errors::UnsupportedImageType => e
               warn "Unsupported image type error: #{e.message}"
             rescue StandardError => e
-              warn "Error embedding SVG: #{e.message}"
+              warn "Failed embedding SVG: #{e.message}"
             end
           end
         ensure
