@@ -1,7 +1,7 @@
 require 'asciidoctor-pdf' unless Asciidoctor::Converter.for 'pdf'
 require 'open3'
 require 'tempfile'
-require 'rexml/document' # For parsing SVG dimensions
+require 'rexml/document'
 
 class AsciidoctorPDFExtensions < (Asciidoctor::Converter.for 'pdf')
   register_for 'pdf'
@@ -24,7 +24,6 @@ class AsciidoctorPDFExtensions < (Asciidoctor::Converter.for 'pdf')
         end
       else
         puts "DEBUG: Successfully converted STEM to SVG"
-        puts "DEBUG: SVG output: #{svg_output}..."
         svg_file = Tempfile.new(['stem', '.svg'])
         begin
           svg_file.write(svg_output)
