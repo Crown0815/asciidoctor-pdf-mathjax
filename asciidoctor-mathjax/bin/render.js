@@ -8,8 +8,6 @@ mj.config({
 });
 mj.start();
 
-const fs = require('fs');
-
 async function convertToSvg(latex) {
   const data = await mj.typeset({
     math: latex,
