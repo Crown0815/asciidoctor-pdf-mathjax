@@ -54,6 +54,34 @@ class AsciidoctorPDFExtensions < (Asciidoctor::Converter.for 'pdf')
     theme_margin :block, :bottom, (next_enclosed_block node)
   end
 
+  def convert_inline_quoted node
+    puts "DEBUG: convert inline_quoted node '#{node.text[0..20]}' of type #{node.type}"
+    if node.type != :asciimath && node.type != :latexmath
+      return super
+    end
+    puts "DEBUG: Processing math node '#{node.text}'"
+
+    svg_output, error = stem_to_svg(node.text)
+    if svg_output.nil? || svg_output.empty?
+      puts "DEBUG: Error processing stem: #{error || 'No SVG output'}"
+      return "<span>#{node.text}</span>"
+    end
+
+    tmp_svg = Tempfile.new(['stem-', '.svg'])
+    begin
+      tmp_svg.write(svg_output)
+      tmp_svg.close
+      @tmp_files ||= {}
+      @tmp_files[tmp_svg.path] = tmp_svg.path
+
+      # Explicitly specify format="svg" in the <img> tag
+      "<img src=\"#{tmp_svg.path}\" format=\"svg\" width=\"50\" alt=\"[#{node.text}]\">"
+    rescue => e
+      puts "DEBUG: Failed to process SVG: #{e.message}"
+      "<span>#{node.text}</span>"
+    end
+  end
+end
 
 private
 
