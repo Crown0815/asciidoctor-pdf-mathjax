@@ -1,7 +1,6 @@
-= Test Document stem:[x^2 + y^2 = z^2]
+= Test Document stem:[x_1^2 + y_1^2]
 :stem: latexmath
 :pdf-themesdir: {root}/theme
-// :pdf-theme: test
 :imagesdir: {root}/media
 
 [stem]
@@ -9,13 +8,8 @@
 E = mc^2
 ++++
 
-this is soem text
-Inline example: stem:[x^2 = z] and a little more test
+Example 1: stem:[x^2]
 
-and a little more test
+Example 2: stem:[y^2]
 
-Inline example: stem:[\frac{x^2}{y^2}] adasfa
-
-and a little more test
-
-Inline example: stem:[x_1^2 + y_1^2 = z_1^2]  dafdas
+Example 3: stem:[x_1^2]
