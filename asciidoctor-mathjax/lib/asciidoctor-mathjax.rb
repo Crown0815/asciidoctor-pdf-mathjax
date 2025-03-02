@@ -1,6 +1,7 @@
 require 'asciidoctor-pdf' unless Asciidoctor::Converter.for 'pdf'
 require 'open3'
 require 'tempfile'
+require 'rexml/document' # For parsing SVG dimensions
 
 class AsciidoctorPDFExtensions < (Asciidoctor::Converter.for 'pdf')
   register_for 'pdf'
@@ -67,8 +68,18 @@ class AsciidoctorPDFExtensions < (Asciidoctor::Converter.for 'pdf')
       @tmp_files ||= {}
       @tmp_files[tmp_svg.path] = tmp_svg.path
 
-      # Explicitly specify format="svg" in the <img> tag
-      "<img src=\"#{tmp_svg.path}\" format=\"svg\" width=\"50\" alt=\"[#{node.text}]\">"
+      # Calculate dimensions based on current font size
+      target_height = font_size # Match current font size
+      svg_doc = REXML::Document.new(svg_output)
+      intrinsic_width = svg_doc.root.attributes['width']&.to_f || 50
+      intrinsic_height = svg_doc.root.attributes['height']&.to_f || 20
+      aspect_ratio = intrinsic_width / intrinsic_height
+      scaled_width = target_height * aspect_ratio
+
+      # Adjust y-position to align baseline (approximate descent offset)
+      descent_offset = font.descender.abs / 2.0 # Rough baseline adjustment
+
+      "<img src=\"#{tmp_svg.path}\" format=\"svg\" width=\"#{scaled_width}\" height=\"#{target_height}\" position=\"relative\" top=\"#{descent_offset}\" alt=\"[#{node.text}]\">"
     rescue => e
       puts "DEBUG: Failed to process SVG: #{e.message}"
       "<span>#{node.text}</span>"
