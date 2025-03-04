@@ -10,6 +10,8 @@ Example 2: stem:[y^2]
 
 Example 3: stem:[x_1^2]
 
+Example 4: stem:[\_]
+
 this is a long line with a lot of text that causes a line break in the output document.
 So lets see if this is enough text to cause a line break.
 If not, I will add more text. If it is too much text, I will remove some text.

@@ -139,29 +139,33 @@ class AsciidoctorPDFExtensions < (Asciidoctor::Converter.for 'pdf')
     svg_height = svg_height * scaling_factor
 
     svg_height_difference = embedding_text_height - svg_height
+    svg_relative_height_difference = embedding_text_height / svg_height
+    embedding_text_relative_baseline_height = embedding_text_baseline_height / embedding_text_height
+
+    puts "DEBUG: Original SVG height: #{svg_height}, width: #{svg_width}, inner height: #{svg_inner_height}, inner offset: #{svg_inner_offset}"
     if svg_height_difference < 0
       puts "DEBUG: SVG height is greater than embedding text height: #{svg_height} > #{embedding_text_height}"
+
+      svg_relative_portion_extending_embedding_text_below = (1 - svg_relative_height_difference) / 2
+      svg_relative_baseline_height = embedding_text_relative_baseline_height * svg_relative_height_difference
+      svg_inner_relative_offset = svg_relative_baseline_height + svg_relative_portion_extending_embedding_text_below - 1
+
+      svg_inner_offset = svg_inner_relative_offset * svg_inner_height
     else
       puts "DEBUG: SVG height is less than embedding text height: #{svg_height} < #{embedding_text_height}"
-      puts "DEBUG: Original SVG height: #{svg_height}, inner height: #{svg_inner_height}, inner offset: #{svg_inner_offset}"
-
-      svg_relative_height_difference = embedding_text_height / svg_height
-
-      embedding_text_relative_baseline_height = embedding_text_baseline_height / embedding_text_height
-
+      svg_height = embedding_text_height
       svg_inner_height = svg_relative_height_difference * svg_inner_height
       svg_inner_offset = (embedding_text_relative_baseline_height - 1) * svg_inner_height
-      svg_height = embedding_text_height
-
-      view_box[1] = svg_inner_offset
-      view_box[3] = svg_inner_height
-      svg_doc.root.attributes['viewBox'] = view_box.join(' ')
-      svg_doc.root.attributes['height'] = "#{svg_height / EX_TO_PT}ex"
-      svg_doc.root.attributes['width'] = "#{svg_width / EX_TO_PT}ex"
-      svg_doc.root.attributes.delete('style')
-
-      puts "DEBUG: Adjusted SVG height: #{svg_height}, width: #{svg_width}, inner height: #{svg_inner_height}, inner offset: #{svg_inner_offset}"
     end
+
+    view_box[1] = svg_inner_offset
+    view_box[3] = svg_inner_height
+    svg_doc.root.attributes['viewBox'] = view_box.join(' ')
+    svg_doc.root.attributes['height'] = "#{svg_height / EX_TO_PT}ex"
+    svg_doc.root.attributes['width'] = "#{svg_width / EX_TO_PT}ex"
+    svg_doc.root.attributes.delete('style')
+
+    puts "DEBUG: Adjusted SVG height: #{svg_height}, width: #{svg_width}, inner height: #{svg_inner_height}, inner offset: #{svg_inner_offset}"
 
     [svg_doc.to_s, svg_width]
   rescue => e
