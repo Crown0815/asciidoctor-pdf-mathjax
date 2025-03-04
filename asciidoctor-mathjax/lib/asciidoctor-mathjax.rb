@@ -48,6 +48,8 @@ class AsciidoctorPDFExtensions < (Asciidoctor::Converter.for 'pdf')
     theme_margin :block, :bottom, (next_enclosed_block node)
   end
 
+  EX_TO_PT = 6
+
   def convert_inline_quoted node
 
     puts "DEBUG: convert inline_quoted node '#{node.text[0..20]}' of type #{node.type}"
@@ -63,28 +65,17 @@ class AsciidoctorPDFExtensions < (Asciidoctor::Converter.for 'pdf')
     end
 
     # Adjust SVG to align baseline with bottom
-    target_font_size = font_size || @root_font_size || 12
-    adjusted_svg = adjust_svg_baseline(svg_output, node)
+    adjusted_svg, svg_width = adjust_svg_baseline(svg_output, node)
     tmp_svg = Tempfile.new(['stem-', '.svg'])
     begin
       puts "DEBUG: Writing inline_quoted math node '#{node.text}' to SVG: #{tmp_svg.path}"
-      puts "DEBUG: Raw SVG content: #{svg_output[0..80]}..."
-      puts "DEBUG: Adjusted SVG content: #{adjusted_svg[0..80]}..."
       tmp_svg.write(adjusted_svg)
       tmp_svg.close
       @tmp_files ||= {}
       @tmp_files[tmp_svg.path] = tmp_svg.path
 
-      # Scale to font size using width only
-      svg_doc = REXML::Document.new(svg_output) # Use original for dimensions
-      svg_width = svg_doc.root.attributes['width'].to_f
-      default_font_size = 12
-      ex_per_px = 6 # Assume 6ex width
-      scaled_width = target_font_size / default_font_size * svg_width * ex_per_px
-
-      puts "DEBUG: Font size: #{font_size}, Root font size: #{@root_font_size}, Target font size: #{target_font_size || 'nil'}, SVG-width: #{svg_width}, Scaled width: #{scaled_width}"
-      puts "DEBUG: <img src=\"#{tmp_svg.path}\" format=\"svg\" width=\"#{scaled_width}\" alt=\"[#{node.text}]\">"
-      "<img src=\"#{tmp_svg.path}\" format=\"svg\" width=\"#{scaled_width}\" alt=\"[#{node.text}]\">"
+      puts "DEBUG: <img src=\"#{tmp_svg.path}\" format=\"svg\" width=\"#{svg_width}\" alt=\"[#{node.text}]\">"
+      "<img src=\"#{tmp_svg.path}\" format=\"svg\" width=\"#{svg_width}\" alt=\"[#{node.text}]\">"
     rescue => e
       puts "DEBUG: Failed to process SVG: #{e.message}"
       "<span>#{node.text}</span>"
@@ -111,79 +102,60 @@ class AsciidoctorPDFExtensions < (Asciidoctor::Converter.for 'pdf')
     theme_table = theme.instance_variable_get(:@table)
 
     # Access the attributes
-    base_font_family = theme_table[:base_font_family]
-    base_font_style = theme_table[:base_font_style]
-    base_font_size = theme_table[:base_font_size]
-    base_line_height_length = theme_table[:base_line_height_length]
-    base_line_height = theme_table[:base_line_height]
+    font_family = theme_table[:base_font_family]
+    font_style = theme_table[:base_font_style]
+    font_size = theme_table[:base_font_size]
 
     # Access the font_catalog entry
     font_catalog = theme_table[:font_catalog]
-    font_file = font_catalog[base_font_family][base_font_style.to_s]
+    font_file = font_catalog[font_family][font_style.to_s]
 
     font = TTFunk::File.open(font_file)
-    puts "DEBUG: hhea: #{font.pretty_inspect}"
-    hhea = font.horizontal_header
-    puts "DEBUG: hhea: #{hhea.pretty_inspect}"
-    descender_height = hhea.descent.abs
-    ascender_height = hhea.ascent.abs
+    descender_height = font.horizontal_header.descent.abs
+    ascender_height = font.horizontal_header.ascent.abs
 
-    font_size = base_font_size
-    upem = font.header.units_per_em
+    units_per_em = font.header.units_per_em.to_f
     total_height = (descender_height.to_f + ascender_height.to_f)
-    descender_height_ratio = (descender_height.to_f / total_height)
-    descender_height_in_points = descender_height_ratio * font_size
 
-    puts "Base Font Family: #{base_font_family}"
-    puts "Base Font Style: #{base_font_style}"
-    puts "Base Font Size: #{base_font_size}"
-    puts "Base Line Height Length: #{base_line_height_length}"
-    puts "Base Line Height: #{base_line_height}"
-    puts "Font File: #{font_file}"
-    puts "Ascender height in font units: #{ascender_height}, unit per em ratio #{ascender_height / upem.to_f}"
-    puts "Descender height in font units: #{descender_height}, unit per em ratio #{descender_height / upem.to_f}"
-    puts "Total height in font units: #{total_height.to_s}, unit per em: #{upem}, ratio #{total_height / upem.to_f}"
-    puts "Descender height ratio: #{descender_height_ratio}"
-    puts "Descender height ratio font size #{font_size}pt: #{descender_height_in_points.round(2)}pt"
+    embedding_text_height = total_height / units_per_em * font_size
+    embedding_text_baseline_height = descender_height / units_per_em * font_size
+
+    puts "Embedding in font #{font_family}-#{font_style} size #{font_size}pt (text height: #{embedding_text_height.round(2)}pt, baseline #{embedding_text_baseline_height.round(2)}pt)"
 
 
 
     svg_doc = REXML::Document.new(svg_content)
+    svg_width = svg_doc.root.attributes['width'].to_f * EX_TO_PT || raise("No width found in SVG")
+    svg_height = svg_doc.root.attributes['height'].to_f * EX_TO_PT || raise("No height found in SVG")
     view_box = svg_doc.root.attributes['viewBox']&.split(/\s+/)&.map(&:to_f) || raise("No viewBox found in SVG")
-    width = svg_doc.root.attributes['width'].to_f || raise("No width found in SVG")
-    height = svg_doc.root.attributes['height'].to_f || raise("No height found in SVG")
-    vertical_align = svg_doc.root.attributes['style']&.match(/vertical-align:\s*([-.\d]+)ex/)&.captures&.first&.to_f || raise("No vertical alignment found in SVG")
+    svg_inner_offset = view_box[1]
+    svg_inner_height = view_box[3]
 
-    puts "DEBUG: Adjusting SVG baseline: viewBox=#{view_box}, width=#{width}, height=#{height}, font_size=#{font_size}, vertical_align=#{vertical_align}"
+    svg_height_difference = embedding_text_height - svg_height
+    if svg_height_difference < 0
+      puts "DEBUG: SVG height is greater than embedding text height: #{svg_height} > #{embedding_text_height}"
+    else
+      puts "DEBUG: SVG height is less than embedding text height: #{svg_height} < #{embedding_text_height}"
+      puts "DEBUG: Original SVG height: #{svg_height}, inner height: #{svg_inner_height}, inner offset: #{svg_inner_offset}"
+      svg_relative_height_difference = embedding_text_height / svg_height
 
-    svg_width = svg_doc.root.attributes['width'].to_f
-    default_font_size = 12
-    scaled_width = font_size / default_font_size * svg_width
-    height_embedding_text = font_size / 6 # Assume 6ex height
+      embedding_text_relative_baseline_height = embedding_text_baseline_height / embedding_text_height
 
-    aspect_ratio = height / width
-    puts "DEBUG: SVG aspect ratio: #{aspect_ratio}, scaled_width=#{scaled_width}, height_embedding_text=#{height_embedding_text}"
+      svg_inner_height = svg_relative_height_difference * svg_inner_height
+      svg_inner_offset = (embedding_text_relative_baseline_height - 1) * svg_inner_height
+      svg_height = embedding_text_height
 
-    outer_offset = (scaled_width * aspect_ratio - height_embedding_text) / 2 + vertical_align
-    puts "DEBUG: Outer offset: #{outer_offset}"
+      view_box[1] = svg_inner_offset
+      view_box[3] = svg_inner_height
+      svg_doc.root.attributes['viewBox'] = view_box.join(' ')
+      svg_doc.root.attributes['height'] = "#{svg_height / EX_TO_PT}ex"
+      svg_doc.root.attributes.delete('style')
 
-    view_box_height = view_box[3]
-    puts "DEBUG: viewBox height: #{view_box_height}"
-    inner_offset = view_box_height * outer_offset / height
-    puts "DEBUG: Inner offset: #{inner_offset}"
+      puts "DEBUG: Adjusted SVG height: #{svg_height}, inner height: #{svg_inner_height}, inner offset: #{svg_inner_offset}"
+    end
 
-    view_box_min_y = view_box[1]
-    puts "DEBUG: Inner offset: #{inner_offset}"
-    view_box_min_y_new = view_box_min_y - inner_offset
-    puts "DEBUG: New viewBox min-y: #{view_box_min_y_new}"
 
-    view_box[1] = view_box_min_y_new
-    puts "DEBUG: Adjusted SVG baseline: viewBox=#{view_box}, width=#{width}, height=#{height}, font_size=#{font_size}, vertical_align=#{vertical_align}"
-    svg_doc.root.attributes['viewBox'] = view_box.join(' ')
-    svg_doc.root.attributes['style'] = "border:1px solid black"
-    # svg_doc.root.attributes.delete('style')
-
-    svg_doc.to_s
+    [svg_doc.to_s, svg_width]
   rescue => e
     puts "DEBUG: Failed to adjust SVG baseline: #{e.message}"
     svg_content # Fallback to original if adjustment fails
