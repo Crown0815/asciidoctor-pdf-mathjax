@@ -4,6 +4,8 @@ require 'tempfile'
 require 'rexml/document'
 require 'ttfunk'
 
+EX_TO_PT = 6
+
 class AsciidoctorPDFExtensions < (Asciidoctor::Converter.for 'pdf')
   register_for 'pdf'
 
@@ -47,8 +49,6 @@ class AsciidoctorPDFExtensions < (Asciidoctor::Converter.for 'pdf')
     end
     theme_margin :block, :bottom, (next_enclosed_block node)
   end
-
-  EX_TO_PT = 6
 
   def convert_inline_quoted node
 
