@@ -49,53 +49,6 @@ class AsciidoctorPDFExtensions < (Asciidoctor::Converter.for 'pdf')
   end
 
   def convert_inline_quoted node
-    doc = node.document
-
-    # Assuming 'doc' is the Asciidoctor::Document object
-    converter = doc.instance_variable_get(:@converter)
-    theme = converter.instance_variable_get(:@theme)
-    theme_table = theme.instance_variable_get(:@table)
-
-    # Access the attributes
-    base_font_family = theme_table[:base_font_family]
-    base_font_style = theme_table[:base_font_style]
-    base_font_size = theme_table[:base_font_size]
-    base_line_height_length = theme_table[:base_line_height_length]
-    base_line_height = theme_table[:base_line_height]
-
-    # Access the font_catalog entry
-    font_catalog = theme_table[:font_catalog]
-    font_file = font_catalog[base_font_family][base_font_style.to_s]  # "/usr/lib/ruby/gems/3.3.0/gems/asciidoctor-pdf-2.3.19/data/fonts/notoserif-regular-subset.ttf"
-
-    font = TTFunk::File.open(font_file)
-    puts "DEBUG: hhea: #{font.pretty_inspect}"
-    hhea = font.horizontal_header
-    puts "DEBUG: hhea: #{hhea.pretty_inspect}"
-    descender_height = hhea.descent.abs
-    ascender_height = hhea.ascent.abs
-
-    font_size = base_font_size
-    upem = font.header.units_per_em
-    total_height = (descender_height.to_f + ascender_height.to_f)
-    descender_height_ratio = (descender_height.to_f / total_height)
-    descender_height_in_points = descender_height_ratio * font_size
-
-    # Output the scaled descender height
-
-    # Optional: Print the results
-    puts "Base Font Family: #{base_font_family}"
-    puts "Base Font Style: #{base_font_style}"
-    puts "Base Font Size: #{base_font_size}"
-    puts "Base Line Height Length: #{base_line_height_length}"
-    puts "Base Line Height: #{base_line_height}"
-    puts "Font File: #{font_file}"
-    puts "Ascender height in font units: #{ascender_height}, unit per em ratio #{ascender_height / upem.to_f}"
-    puts "Descender height in font units: #{descender_height}, unit per em ratio #{descender_height / upem.to_f}"
-    puts "Total height in font units: #{total_height.to_s}, unit per em: #{upem}, ratio #{total_height / upem.to_f}"
-    puts "Descender height ratio: #{descender_height_ratio}"
-    puts "Descender height ratio font size #{font_size}pt: #{descender_height_in_points.round(2)}pt"
-
-
 
     puts "DEBUG: convert inline_quoted node '#{node.text[0..20]}' of type #{node.type}"
     if node.type != :asciimath && node.type != :latexmath
@@ -111,7 +64,7 @@ class AsciidoctorPDFExtensions < (Asciidoctor::Converter.for 'pdf')
 
     # Adjust SVG to align baseline with bottom
     target_font_size = font_size || @root_font_size || 12
-    adjusted_svg = adjust_svg_baseline(svg_output, target_font_size)
+    adjusted_svg = adjust_svg_baseline(svg_output, node)
     tmp_svg = Tempfile.new(['stem-', '.svg'])
     begin
       puts "DEBUG: Writing inline_quoted math node '#{node.text}' to SVG: #{tmp_svg.path}"
@@ -150,7 +103,51 @@ class AsciidoctorPDFExtensions < (Asciidoctor::Converter.for 'pdf')
     [svg_output, error]
   end
 
-  def adjust_svg_baseline(svg_content, font_size)
+  def adjust_svg_baseline(svg_content, node)
+    doc = node.document
+
+    converter = doc.instance_variable_get(:@converter)
+    theme = converter.instance_variable_get(:@theme)
+    theme_table = theme.instance_variable_get(:@table)
+
+    # Access the attributes
+    base_font_family = theme_table[:base_font_family]
+    base_font_style = theme_table[:base_font_style]
+    base_font_size = theme_table[:base_font_size]
+    base_line_height_length = theme_table[:base_line_height_length]
+    base_line_height = theme_table[:base_line_height]
+
+    # Access the font_catalog entry
+    font_catalog = theme_table[:font_catalog]
+    font_file = font_catalog[base_font_family][base_font_style.to_s]
+
+    font = TTFunk::File.open(font_file)
+    puts "DEBUG: hhea: #{font.pretty_inspect}"
+    hhea = font.horizontal_header
+    puts "DEBUG: hhea: #{hhea.pretty_inspect}"
+    descender_height = hhea.descent.abs
+    ascender_height = hhea.ascent.abs
+
+    font_size = base_font_size
+    upem = font.header.units_per_em
+    total_height = (descender_height.to_f + ascender_height.to_f)
+    descender_height_ratio = (descender_height.to_f / total_height)
+    descender_height_in_points = descender_height_ratio * font_size
+
+    puts "Base Font Family: #{base_font_family}"
+    puts "Base Font Style: #{base_font_style}"
+    puts "Base Font Size: #{base_font_size}"
+    puts "Base Line Height Length: #{base_line_height_length}"
+    puts "Base Line Height: #{base_line_height}"
+    puts "Font File: #{font_file}"
+    puts "Ascender height in font units: #{ascender_height}, unit per em ratio #{ascender_height / upem.to_f}"
+    puts "Descender height in font units: #{descender_height}, unit per em ratio #{descender_height / upem.to_f}"
+    puts "Total height in font units: #{total_height.to_s}, unit per em: #{upem}, ratio #{total_height / upem.to_f}"
+    puts "Descender height ratio: #{descender_height_ratio}"
+    puts "Descender height ratio font size #{font_size}pt: #{descender_height_in_points.round(2)}pt"
+
+
+
     svg_doc = REXML::Document.new(svg_content)
     view_box = svg_doc.root.attributes['viewBox']&.split(/\s+/)&.map(&:to_f) || raise("No viewBox found in SVG")
     width = svg_doc.root.attributes['width'].to_f || raise("No width found in SVG")

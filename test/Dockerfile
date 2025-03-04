@@ -9,5 +9,6 @@ ENV NODE_PATH=/usr/local/lib/node_modules
 RUN node -e "require('mathjax-node')" || echo "Failed to require mathjax-node"
 
 RUN gem install nokogiri
+RUN gem install ttfunk
 WORKDIR /test/
 ENTRYPOINT ["bash", "-c", "exec \"$@\"", "--"]

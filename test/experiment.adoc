@@ -1,0 +1,74 @@
+= Test Document stem:[x_1^2 + y_1^2]
+:stem: latexmath
+:pdf-themesdir: {root}/theme
+:pdf-theme: test
+:imagesdir: {root}/media
+
+== Header stem:[y_1^2 + y_2^2]
+
+[stem]
+++++
+E = mc^2
+++++
+
+#x# #Hg# #Adjective# #Jog# +
+#Hg# #x#
+
+Example 1: stem:[x^2]
+
+Example 4:
+image:../media/x2.svg[width=5]
+image:../media/x2.svg[width=10]
+image:../media/x2.svg[width=11]
+image:../media/x2.svg[width=15]
+image:../media/x2.svg[width=20]
+image:../media/x2.svg[width=25]
+image:../media/x2.svg[width=30]
+
+I
+image:../media/black.svg[width=5]
+p
+I
+image:../media/black.svg[width=10]
+p
+I
+image:../media/black.svg[width=15]
+p
+n
+I
+image:../media/black.svg[width=20]
+p
+n
+I
+image:../media/black.svg[width=25]
+p
+I
+image:../media/black.svg[width=27]
+p
+I
+image:../media/black.svg[width=30]
+p
+I
+image:../media/black.svg[width=35]
+p
+
+
+Rectangle:
+image:../media/black.svg[width=28]
+
+Rectangle:
+image:../media/black.svg[width=40]
+
+Example 2: stem:[y^2]
+
+Example 4: image:../media/y2.svg[width=16]
+
+Example 3: stem:[x_1^2]
+
+
+yf
+image:../media/x_12_experimental.svg[width=18]
+image:../media/x_12.svg[width=18]
+image:../media/x_12_shifted.svg[width=18]
+
+
