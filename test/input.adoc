@@ -4,12 +4,31 @@
 :imagesdir: {root}/media
 :pdf-theme: test
 
+== Level 1 Header stem:[x_1^2]
+
+=== Level 2 Header stem:[x_2^2]
+
+==== Level 3 Header stem:[x_3^2]
+
+===== Level 4 Header stem:[x_4^2]
+
+====== Level 5 Header stem:[x_5^2]
+
+== STEM (LaTeX Math)
+
+=== Block
+
 [stem]
 ++++
 E = mc^2
 ++++
 
-== Level 1 Header stem:[x_1^2]
+[stem]
+++++
+\sum_{{{i}={1}}}^{{n}}{i}^{3}={\left(\frac{{{n}{\left({n}+{1}\right)}}}{{2}}\right)}^{2}
+++++
+
+=== Inline
 
 Example 1: stem:[x^2]
 
@@ -19,10 +38,52 @@ Example 3: stem:[x_1^2]
 
 Example 4: stem:[\_]
 
-=== Level 2 Header stem:[x_2^2]
+== LaTeX Math
 
-==== Level 3 Header stem:[x_3^2]
+=== Block
 
-===== Level 4 Header stem:[x_4^2]
+[latexmath]
+++++
+E = mc^2
+++++
 
-====== Level 5 Header stem:[x_5^2]
+[latexmath]
+++++
+\sum_{{{i}={1}}}^{{n}}{i}^{3}={\left(\frac{{{n}{\left({n}+{1}\right)}}}{{2}}\right)}^{2}
+++++
+
+=== Inline
+
+Example 1: latexmath:[x^2]
+
+Example 2: latexmath:[y^2]
+
+Example 3: latexmath:[x_1^2]
+
+Example 4: latexmath:[\_]
+
+== ASCIIMATH
+
+=== Block
+
+[asciimath]
+++++
+E = mc^2
+++++
+
+[asciimath]
+++++
+sum_(i=1)^n i^3=((n(n+1))/2)^2
+++++
+
+=== Inline
+
+Example 1: asciimath:[x^2]
+
+Example 2: asciimath:[y^2]
+
+Example 3: asciimath:[x_1^2]
+
+Example 4: asciimath:[\_]
+
+Example 5: asciimath:[sum_(i=1)^n i^3=((n(n+1))/2)^2]

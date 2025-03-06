@@ -3,6 +3,7 @@ require 'open3'
 require 'tempfile'
 require 'rexml/document'
 require 'ttfunk'
+require 'asciimath'
 
 EX_TO_PT = 6
 
@@ -13,7 +14,15 @@ class AsciidoctorPDFExtensions < (Asciidoctor::Converter.for 'pdf')
     arrange_block node do |extent|
       add_dest_for_block node if node.id
 
-      latex_content = node.content.strip
+      case node.style.to_sym
+      when :latexmath
+        latex_content = node.content.strip
+      when :asciimath
+        latex_content = AsciiMath.parse(node.content.strip).to_latex
+      else
+        return super
+      end
+
       svg_output, error = stem_to_svg(latex_content)
 
       if svg_output.nil? || svg_output.empty?
@@ -51,13 +60,18 @@ class AsciidoctorPDFExtensions < (Asciidoctor::Converter.for 'pdf')
   end
 
   def convert_inline_quoted node
-
-    if node.type != :asciimath && node.type != :latexmath
+    case node.type
+    when :latexmath
+      latex_content = node.text
+    when :asciimath
+      latex_content = AsciiMath.parse(node.text).to_latex
+    else
       return super
     end
+
     puts "DEBUG: convert inline_quoted #{node.type} node '#{node.text[0..20]}'"
 
-    svg_output, error = stem_to_svg(node.text)
+    svg_output, error = stem_to_svg(latex_content)
     adjusted_svg, svg_width = adjust_svg_to_match_text_baseline(svg_output, node, @theme)
     if adjusted_svg.nil? || adjusted_svg.empty?
       puts "DEBUG: Error processing stem: #{error || 'No SVG output'}"
