@@ -10,6 +10,11 @@ POINTS_PER_EX = 6
 class AsciidoctorPDFExtensions < (Asciidoctor::Converter.for 'pdf')
   register_for 'pdf'
 
+  @tempfiles = []
+  class << self
+    attr_reader :tempfiles
+  end
+
   def convert_stem node
     arrange_block node do |extent|
       add_dest_for_block node if node.id
@@ -81,8 +86,7 @@ class AsciidoctorPDFExtensions < (Asciidoctor::Converter.for 'pdf')
     end
 
     tmp_svg = Tempfile.new(['stem-', '.svg'])
-    @tmp_files ||= {}
-    @tmp_files[tmp_svg.path] = tmp_svg.path
+    self.class.tempfiles << tmp_svg
     begin
       tmp_svg.write(adjusted_svg)
       tmp_svg.close
