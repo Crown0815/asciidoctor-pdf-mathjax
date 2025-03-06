@@ -1,8 +1,15 @@
-= Test
+= Level 0 Header stem:[x_0^2]
 :stem: latexmath
 :pdf-themesdir: {root}/theme
 :imagesdir: {root}/media
 :pdf-theme: test
+
+[stem]
+++++
+E = mc^2
+++++
+
+== Level 1 Header stem:[x_1^2]
 
 Example 1: stem:[x^2]
 
@@ -12,7 +19,10 @@ Example 3: stem:[x_1^2]
 
 Example 4: stem:[\_]
 
-this is a long line with a lot of text that causes a line break in the output document.
-So lets see if this is enough text to cause a line break.
-If not, I will add more text. If it is too much text, I will remove some text.
-Lets see what happens.
+=== Level 2 Header stem:[x_2^2]
+
+==== Level 3 Header stem:[x_3^2]
+
+===== Level 4 Header stem:[x_4^2]
+
+====== Level 5 Header stem:[x_5^2]

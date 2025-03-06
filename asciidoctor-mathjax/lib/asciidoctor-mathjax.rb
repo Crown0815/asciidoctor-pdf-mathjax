@@ -26,7 +26,7 @@ class AsciidoctorPDFExtensions < (Asciidoctor::Converter.for 'pdf')
           end
         end
       else
-        puts "DEBUG: Successfully converted STEM to SVG"
+        puts "DEBUG: Successfully converted STEM block with content #{latex_content} to SVG"
         svg_file = Tempfile.new(['stem', '.svg'])
         begin
           svg_file.write(svg_output)
@@ -52,33 +52,30 @@ class AsciidoctorPDFExtensions < (Asciidoctor::Converter.for 'pdf')
 
   def convert_inline_quoted node
 
-    puts "DEBUG: convert inline_quoted node '#{node.text[0..20]}' of type #{node.type}"
     if node.type != :asciimath && node.type != :latexmath
       return super
     end
-    puts "DEBUG: Processing math node '#{node.text}'"
+    puts "DEBUG: convert inline_quoted #{node.type} node '#{node.text[0..20]}'"
 
     svg_output, error = stem_to_svg(node.text)
-    if svg_output.nil? || svg_output.empty?
+    adjusted_svg, svg_width = adjust_svg_to_match_text_baseline(svg_output, node, @theme)
+    if adjusted_svg.nil? || adjusted_svg.empty?
       puts "DEBUG: Error processing stem: #{error || 'No SVG output'}"
-      return "<span>#{node.text}</span>"
+      return super
     end
 
-    # Adjust SVG to align baseline with bottom
-    adjusted_svg, svg_width = adjust_svg_baseline(svg_output, node)
     tmp_svg = Tempfile.new(['stem-', '.svg'])
+    @tmp_files ||= {}
+    @tmp_files[tmp_svg.path] = tmp_svg.path
     begin
-      puts "DEBUG: Writing inline_quoted math node '#{node.text}' to SVG: #{tmp_svg.path}"
       tmp_svg.write(adjusted_svg)
       tmp_svg.close
-      @tmp_files ||= {}
-      @tmp_files[tmp_svg.path] = tmp_svg.path
 
-      puts "DEBUG: <img src=\"#{tmp_svg.path}\" format=\"svg\" width=\"#{svg_width}\" alt=\"[#{node.text}]\">"
+      puts "DEBUG: Writing <img src=\"#{tmp_svg.path}\" format=\"svg\" width=\"#{svg_width}\" alt=\"[#{node.text}]\">"
       "<img src=\"#{tmp_svg.path}\" format=\"svg\" width=\"#{svg_width}\" alt=\"[#{node.text}]\">"
     rescue => e
       puts "DEBUG: Failed to process SVG: #{e.message}"
-      "<span>#{node.text}</span>"
+      super
     end
   end
 
@@ -94,20 +91,35 @@ class AsciidoctorPDFExtensions < (Asciidoctor::Converter.for 'pdf')
     [svg_output, error]
   end
 
-  def adjust_svg_baseline(svg_content, node)
-    doc = node.document
+  def adjust_svg_to_match_text_baseline(svg_content, node, theme)
+    node_context = find_font_context(node)
+    puts "DEBUG: Found font context: #{node_context} for node #{node}"
 
-    converter = doc.instance_variable_get(:@converter)
-    theme = converter.instance_variable_get(:@theme)
-    theme_table = theme.instance_variable_get(:@table)
+    converter = node_context.converter
 
-    # Access the attributes
-    font_family = theme_table[:base_font_family]
-    font_style = theme_table[:base_font_style]
-    font_size = theme_table[:base_font_size]
 
-    # Access the font_catalog entry
-    font_catalog = theme_table[:font_catalog]
+
+
+    # Determine font settings based on node type
+    if node_context.is_a?(Asciidoctor::Section)
+      # Explicitly handle section headers
+      level = node_context.level
+      font_family = theme["heading_h#{level}_font_family"] || theme['heading_font_family'] || theme['base_font_family'] || 'Arial'
+      font_style = theme["heading_h#{level}_font_style"] || theme['heading_font_style'] || theme['base_font_style'] || 'normal'
+      font_size = theme["heading_h#{level}_font_size"] || theme['heading_font_size'] || theme['base_font_size'] || 12
+    else
+      # Use theme_font for all other node types
+      font_family = nil
+      font_style = nil
+      font_size = nil
+      converter.theme_font :base do
+        font_family = converter.font_family || 'Arial'
+        font_style = converter.font_style || 'normal'
+        font_size = converter.font_size || 12
+      end
+    end
+
+    font_catalog = theme.font_catalog
     font_file = font_catalog[font_family][font_style.to_s]
 
     font = TTFunk::File.open(font_file)
@@ -169,7 +181,20 @@ class AsciidoctorPDFExtensions < (Asciidoctor::Converter.for 'pdf')
 
     [svg_doc.to_s, svg_width]
   rescue => e
-    puts "DEBUG: Failed to adjust SVG baseline: #{e.message}"
-    svg_content # Fallback to original if adjustment fails
+    puts "DEBUG: Failed to adjust SVG baseline: #{e.full_message}"
+    nil # Fallback to original if adjustment fails
+  end
+
+  def find_font_context(node)
+    current = node
+    while current
+      if current.is_a?(Asciidoctor::Section)
+        return current
+      elsif current.is_a?(Asciidoctor::Block)
+        return current
+      end
+      current = current.parent
+    end
+    current
   end
 end
