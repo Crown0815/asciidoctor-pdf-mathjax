@@ -8,8 +8,9 @@ mj.config({
 });
 mj.start();
 
-async function convertToSvg(latex, format) {
+async function convertToSvg(latex, format, pixels_per_ex) {
   const data = await mj.typeset({
+    ex: pixels_per_ex,
     math: latex,
     format: format,
     svg: true,
@@ -19,6 +20,7 @@ async function convertToSvg(latex, format) {
 
 const latex = process.argv[2];
 const format = process.argv[3];
-convertToSvg(latex, format).then(svg => {
+const pixels_per_ex = parseInt(process.argv[4]);
+convertToSvg(latex, format, pixels_per_ex).then(svg => {
   console.log(svg);
 }).catch(err => console.error(err));

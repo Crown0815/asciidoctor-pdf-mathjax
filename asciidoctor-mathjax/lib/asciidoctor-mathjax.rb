@@ -5,7 +5,7 @@ require 'rexml/document'
 require 'ttfunk'
 require 'asciimath'
 
-EX_TO_PT = 6
+POINTS_PER_EX = 6
 
 class AsciidoctorPDFExtensions < (Asciidoctor::Converter.for 'pdf')
   register_for 'pdf'
@@ -101,7 +101,7 @@ class AsciidoctorPDFExtensions < (Asciidoctor::Converter.for 'pdf')
     js_script = File.join(File.dirname(__FILE__), '../bin/render.js')
     svg_output, error = nil, nil
     format = is_inline ? 'inline-TeX' : 'TeX'
-    Open3.popen3('node', js_script, latex_content, format) do |_, stdout, stderr, wait_thr|
+    Open3.popen3('node', js_script, latex_content, format, POINTS_PER_EX.to_s) do |_, stdout, stderr, wait_thr|
       svg_output = stdout.read
       error = stderr.read unless wait_thr.value.success?
     end
@@ -154,8 +154,8 @@ class AsciidoctorPDFExtensions < (Asciidoctor::Converter.for 'pdf')
 
 
     svg_doc = REXML::Document.new(svg_content)
-    svg_width = svg_doc.root.attributes['width'].to_f * EX_TO_PT || raise("No width found in SVG")
-    svg_height = svg_doc.root.attributes['height'].to_f * EX_TO_PT || raise("No height found in SVG")
+    svg_width = svg_doc.root.attributes['width'].to_f * POINTS_PER_EX || raise("No width found in SVG")
+    svg_height = svg_doc.root.attributes['height'].to_f * POINTS_PER_EX || raise("No height found in SVG")
     view_box = svg_doc.root.attributes['viewBox']&.split(/\s+/)&.map(&:to_f) || raise("No viewBox found in SVG")
     svg_inner_offset = view_box[1]
     svg_inner_height = view_box[3]
@@ -190,8 +190,8 @@ class AsciidoctorPDFExtensions < (Asciidoctor::Converter.for 'pdf')
     view_box[1] = svg_inner_offset
     view_box[3] = svg_inner_height
     svg_doc.root.attributes['viewBox'] = view_box.join(' ')
-    svg_doc.root.attributes['height'] = "#{svg_height / EX_TO_PT}ex"
-    svg_doc.root.attributes['width'] = "#{svg_width / EX_TO_PT}ex"
+    svg_doc.root.attributes['height'] = "#{svg_height / POINTS_PER_EX}ex"
+    svg_doc.root.attributes['width'] = "#{svg_width / POINTS_PER_EX}ex"
     svg_doc.root.attributes.delete('style')
 
     puts "DEBUG: Adjusted SVG height: #{svg_height.round(2)}, width: #{svg_width.round(2)}, inner height: #{svg_inner_height.round(2)}, inner offset: #{svg_inner_offset.round(2)}"
