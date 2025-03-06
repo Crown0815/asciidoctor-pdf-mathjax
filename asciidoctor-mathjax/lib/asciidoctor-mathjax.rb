@@ -41,6 +41,8 @@ class AsciidoctorPDFExtensions < (Asciidoctor::Converter.for 'pdf')
         end
       else
         puts "DEBUG: Successfully converted STEM block with content #{latex_content} to SVG"
+
+        svg_output = svg_output.gsub("currentColor", "##{@font_color}")
         svg_file = Tempfile.new(['stem', '.svg'])
         begin
           svg_file.write(svg_output)
@@ -127,6 +129,7 @@ class AsciidoctorPDFExtensions < (Asciidoctor::Converter.for 'pdf')
       font_family = theme["#{theme_key}_font_family"] || theme['heading_font_family'] || theme['base_font_family'] || 'Arial'
       font_style = theme["#{theme_key}_font_style"] || theme['heading_font_style'] || theme['base_font_style'] || 'normal'
       font_size = theme["#{theme_key}_font_size"] || theme['heading_font_size'] || theme['base_font_size'] || 12
+      font_color = theme["#{theme_key}_font_color"] || theme['heading_font_color'] || theme['base_font_color'] || '#000000'
     else
       if node_context.parent.is_a?(Asciidoctor::Section) && node_context.parent.sectname == 'abstract'
         theme_key = :abstract
@@ -137,11 +140,13 @@ class AsciidoctorPDFExtensions < (Asciidoctor::Converter.for 'pdf')
       font_family = nil
       font_style = nil
       font_size = nil
+      font_color = nil
       converter = node_context.converter
       converter.theme_font theme_key do
         font_family = converter.font_family || 'Arial'
         font_style = converter.font_style || 'normal'
         font_size = converter.font_size || 12
+        font_color = converter.font_color || '#000000'
       end
     end
 
@@ -202,10 +207,12 @@ class AsciidoctorPDFExtensions < (Asciidoctor::Converter.for 'pdf')
     svg_doc.root.attributes['height'] = "#{svg_height / POINTS_PER_EX}ex"
     svg_doc.root.attributes['width'] = "#{svg_width / POINTS_PER_EX}ex"
     svg_doc.root.attributes.delete('style')
+    svg_content = svg_doc.to_s
+    svg_content = svg_content.gsub("currentColor", "##{font_color}")
 
     puts "DEBUG: Adjusted SVG height: #{svg_height.round(2)}, width: #{svg_width.round(2)}, inner height: #{svg_inner_height.round(2)}, inner offset: #{svg_inner_offset.round(2)}"
 
-    [svg_doc.to_s, svg_width]
+    [svg_content, svg_width]
   rescue => e
     puts "DEBUG: Failed to adjust SVG baseline: #{e.full_message}"
     nil # Fallback to original if adjustment fails
