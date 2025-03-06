@@ -23,7 +23,7 @@ class AsciidoctorPDFExtensions < (Asciidoctor::Converter.for 'pdf')
         return super
       end
 
-      svg_output, error = stem_to_svg(latex_content)
+      svg_output, error = stem_to_svg(latex_content, false)
 
       if svg_output.nil? || svg_output.empty?
         warn "Failed to convert STEM to SVG: #{error} (Fallback to code block)"
@@ -73,7 +73,7 @@ class AsciidoctorPDFExtensions < (Asciidoctor::Converter.for 'pdf')
 
     theme = (load_theme node.document)
 
-    svg_output, error = stem_to_svg(latex_content)
+    svg_output, error = stem_to_svg(latex_content, true)
     adjusted_svg, svg_width = adjust_svg_to_match_text_baseline(svg_output, node, theme)
     if adjusted_svg.nil? || adjusted_svg.empty?
       puts "DEBUG: Error processing stem: #{error || 'No SVG output'}"
@@ -97,10 +97,11 @@ class AsciidoctorPDFExtensions < (Asciidoctor::Converter.for 'pdf')
 
   private
 
-  def stem_to_svg(latex_content)
+  def stem_to_svg(latex_content, is_inline)
     js_script = File.join(File.dirname(__FILE__), '../bin/render.js')
     svg_output, error = nil, nil
-    Open3.popen3('node', js_script, latex_content) do |_, stdout, stderr, wait_thr|
+    format = is_inline ? 'inline-TeX' : 'TeX'
+    Open3.popen3('node', js_script, latex_content, format) do |_, stdout, stderr, wait_thr|
       svg_output = stdout.read
       error = stderr.read unless wait_thr.value.success?
     end

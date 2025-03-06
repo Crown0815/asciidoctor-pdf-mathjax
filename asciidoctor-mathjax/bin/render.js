@@ -8,16 +8,17 @@ mj.config({
 });
 mj.start();
 
-async function convertToSvg(latex) {
+async function convertToSvg(latex, format) {
   const data = await mj.typeset({
     math: latex,
-    format: 'TeX',
+    format: format,
     svg: true,
   });
   return data.svg;
 }
 
 const latex = process.argv[2];
-convertToSvg(latex).then(svg => {
+const format = process.argv[3];
+convertToSvg(latex, format).then(svg => {
   console.log(svg);
 }).catch(err => console.error(err));
