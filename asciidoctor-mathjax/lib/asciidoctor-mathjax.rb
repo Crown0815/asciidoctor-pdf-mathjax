@@ -87,8 +87,8 @@ class AsciidoctorPDFExtensions < (Asciidoctor::Converter.for 'pdf')
       tmp_svg.write(adjusted_svg)
       tmp_svg.close
 
-      puts "DEBUG: Writing <img src=\"#{tmp_svg.path}\" format=\"svg\" width=\"#{svg_width}\" alt=\"[#{node.text}]\">"
-      "<img src=\"#{tmp_svg.path}\" format=\"svg\" width=\"#{svg_width}\" alt=\"[#{node.text}]\">"
+      puts "DEBUG: Writing <img src=\"#{tmp_svg.path}\" format=\"svg\" width=\"#{svg_width}\" alt=\"#{node.text}\">"
+      "<img src=\"#{tmp_svg.path}\" format=\"svg\" width=\"#{svg_width}\" alt=\"#{node.text}\">"
     rescue => e
       puts "DEBUG: Failed to process SVG: #{e.message}"
       super
