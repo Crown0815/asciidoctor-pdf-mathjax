@@ -214,6 +214,8 @@ class AsciidoctorPDFExtensions < (Asciidoctor::Converter.for 'pdf')
         return current
       elsif current.is_a?(Asciidoctor::Block)
         return current
+      elsif current.is_a?(Asciidoctor::ListItem)
+        return current
       end
       current = current.parent
     end
