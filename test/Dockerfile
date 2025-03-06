@@ -8,7 +8,7 @@ RUN npm install -g npm && npm install -g mathjax-node && npm list -g mathjax-nod
 ENV NODE_PATH=/usr/local/lib/node_modules
 RUN node -e "require('mathjax-node')" || echo "Failed to require mathjax-node"
 
-COPY asciidoctor-mathjax-test.gem /tmp/
-RUN gem install /tmp/asciidoctor-mathjax-test.gem && rm /tmp/asciidoctor-mathjax-test.gem
+RUN gem install nokogiri
+RUN gem install ttfunk
 WORKDIR /test/
 ENTRYPOINT ["bash", "-c", "exec \"$@\"", "--"]

@@ -1,0 +1,4 @@
+extends: default
+
+base:
+    font-size: 15

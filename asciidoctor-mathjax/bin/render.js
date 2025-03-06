@@ -1,29 +1,26 @@
-const mjAPI = require("mathjax-node");
-const fs = require("fs");
+#!/usr/bin/env node
 
-mjAPI.config({
+const mj = require('mathjax-node');
+mj.config({
   MathJax: {
-    // Default configuration
+    // MathJax configuration
   }
 });
-mjAPI.start();
+mj.start();
 
-// Get command-line arguments
-const fontSize = process.argv[2]; // e.g., "12" (in pt)
-const expression = process.argv[3]; // LaTeX expression
-const outputFile = process.argv[4]; // Output SVG path
+async function convertToSvg(latex, format, pixels_per_ex) {
+  const data = await mj.typeset({
+    ex: pixels_per_ex,
+    math: latex,
+    format: format,
+    svg: true,
+  });
+  return data.svg;
+}
 
-mjAPI.typeset({
-  math: expression,
-  format: "TeX",
-  svg: true,
-  ex: 6, // Base em size (6pt per ex, roughly matches 12pt base font)
-  width: 100, // Arbitrary large width to avoid clipping
-}, function (data) {
-  if (!data.errors) {
-    fs.writeFileSync(outputFile, data.svg);
-  } else {
-    console.error("MathJax error:", data.errors);
-    process.exit(1);
-  }
-});
+const latex = process.argv[2];
+const format = process.argv[3];
+const pixels_per_ex = parseInt(process.argv[4]);
+convertToSvg(latex, format, pixels_per_ex).then(svg => {
+  console.log(svg);
+}).catch(err => console.error(err));
