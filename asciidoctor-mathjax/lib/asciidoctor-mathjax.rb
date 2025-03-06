@@ -117,24 +117,28 @@ class AsciidoctorPDFExtensions < (Asciidoctor::Converter.for 'pdf')
     node_context = find_font_context(node)
     puts "DEBUG: Found font context: #{node_context} for node #{node}"
 
-    converter = node_context.converter
-
-
-
-
-    # Determine font settings based on node type
     if node_context.is_a?(Asciidoctor::Section)
-      # Explicitly handle section headers
       level = node_context.level.next
-      font_family = theme["heading_h#{level}_font_family"] || theme['heading_font_family'] || theme['base_font_family'] || 'Arial'
-      font_style = theme["heading_h#{level}_font_style"] || theme['heading_font_style'] || theme['base_font_style'] || 'normal'
-      font_size = theme["heading_h#{level}_font_size"] || theme['heading_font_size'] || theme['base_font_size'] || 12
+      theme_key = "heading_h#{level}"
+      if node_context.sectname == 'abstract'
+        theme_key = 'abstract_title'
+      end
+
+      font_family = theme["#{theme_key}_font_family"] || theme['heading_font_family'] || theme['base_font_family'] || 'Arial'
+      font_style = theme["#{theme_key}_font_style"] || theme['heading_font_style'] || theme['base_font_style'] || 'normal'
+      font_size = theme["#{theme_key}_font_size"] || theme['heading_font_size'] || theme['base_font_size'] || 12
     else
-      # Use theme_font for all other node types
+      if node_context.parent.is_a?(Asciidoctor::Section) && node_context.parent.sectname == 'abstract'
+        theme_key = :abstract
+      else
+        theme_key = :base
+      end
+
       font_family = nil
       font_style = nil
       font_size = nil
-      converter.theme_font :base do
+      converter = node_context.converter
+      converter.theme_font theme_key do
         font_family = converter.font_family || 'Arial'
         font_style = converter.font_style || 'normal'
         font_size = converter.font_size || 12
@@ -208,17 +212,10 @@ class AsciidoctorPDFExtensions < (Asciidoctor::Converter.for 'pdf')
   end
 
   def find_font_context(node)
-    current = node
-    while current
-      if current.is_a?(Asciidoctor::Section)
-        return current
-      elsif current.is_a?(Asciidoctor::Block)
-        return current
-      elsif current.is_a?(Asciidoctor::ListItem)
-        return current
-      end
-      current = current.parent
+    while node
+      return node unless node.is_a?(Asciidoctor::Inline)
+      node = node.parent
     end
-    current
+    node
   end
 end
