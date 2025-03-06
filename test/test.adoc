@@ -32,21 +32,25 @@ E = mc^2
 
 === Inline
 
-. Example: stem:[x^2]
-. Example: stem:[y^2]
-. Example: stem:[x_1^2]
-. Example: stem:[\sum_{{{i}={1}}}^{{n}}{i}^{3}={\left(\frac{{{n}{\left({n}+{1}\right)}}}{{2}}\right)}^{2}]
-. Example: stem:[\frac{a}{b}]
+Example: stem:[x^2]
+
+Example: stem:[x_1^2]
+
+Example: stem:[\sum_{{{i}={1}}}^{{n}}{i}^{3}={\left(\frac{{{n}{\left({n}+{1}\right)}}}{{2}}\right)}^{2}]
+
+Example: stem:[\frac{a}{b}]
 
 === List
 
 . Example stem:[x^2]
-. Example stem:[y^2]
 
 {empty}
 
 * Example stem:[x^2]
-* Example stem:[y^2]
+
+=== Callouts
+
+WARNING: Example stem:[z^2]
 
 
 <<<
@@ -66,21 +70,29 @@ E = mc^2
 
 === Inline
 
-. Example: latexmath:[x^2]
-. Example: latexmath:[y^2]
-. Example: latexmath:[x_1^2]
-. Example: latexmath:[\sum_{{{i}={1}}}^{{n}}{i}^{3}={\left(\frac{{{n}{\left({n}+{1}\right)}}}{{2}}\right)}^{2}]
-. Example: latexmath:[\frac{a}{b}]
+Example 1: latexmath:[x^2]
+
+Example 2: latexmath:[y^2]
+
+Example 3: latexmath:[x_1^2]
+
+Example 4: latexmath:[\_]
+
+Example 5: latexmath:[\sum_{{{i}={1}}}^{{n}}{i}^{3}={\left(\frac{{{n}{\left({n}+{1}\right)}}}{{2}}\right)}^{2}]
+
+Example 6: latexmath:[\frac{a}{b}]
 
 === List
 
 . Example latexmath:[x^2]
-. Example latexmath:[y^2]
 
 {empty}
 
 * Example latexmath:[x^2]
-* Example latexmath:[y^2]
+
+=== Callouts
+
+WARNING: Example latexmath:[z^2]
 
 
 <<<
@@ -100,18 +112,26 @@ sum_(i=1)^n i^3=((n(n+1))/2)^2
 
 === Inline
 
-. Example: asciimath:[x^2]
-. Example: asciimath:[y^2]
-. Example: asciimath:[x_1^2]
-. Example: asciimath:[sum_(i=1)^n i^3=((n(n+1))/2)^2]
-. Example: asciimath:[a/b]
+Example 1: asciimath:[x^2]
+
+Example 2: asciimath:[y^2]
+
+Example 3: asciimath:[x_1^2]
+
+Example 4: asciimath:[\_]
+
+Example 5: asciimath:[sum_(i=1)^n i^3=((n(n+1))/2)^2]
+
+Example 6: asciimath:[a/b]
 
 === List
 
 . Example asciimath:[x^2]
-. Example asciimath:[y^2]
 
 {empty}
 
 * Example asciimath:[x^2]
-* Example asciimath:[y^2]
+
+=== Callouts
+
+WARNING: Example asciimath:[z^2]
