@@ -40,6 +40,8 @@ Example 4: stem:[\_]
 
 Example 5: stem:[\sum_{{{i}={1}}}^{{n}}{i}^{3}={\left(\frac{{{n}{\left({n}+{1}\right)}}}{{2}}\right)}^{2}]
 
+Example 6: stem:[\frac{a}{b}]
+
 == LaTeX Math
 
 === Block
@@ -66,6 +68,8 @@ Example 4: latexmath:[\_]
 
 Example 5: latexmath:[\sum_{{{i}={1}}}^{{n}}{i}^{3}={\left(\frac{{{n}{\left({n}+{1}\right)}}}{{2}}\right)}^{2}]
 
+Example 6: latexmath:[\frac{a}{b}]
+
 == ASCIIMATH
 
 === Block
@@ -91,3 +95,5 @@ Example 3: asciimath:[x_1^2]
 Example 4: asciimath:[\_]
 
 Example 5: asciimath:[sum_(i=1)^n i^3=((n(n+1))/2)^2]
+
+Example 6: asciimath:[a/b]
