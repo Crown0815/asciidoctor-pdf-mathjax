@@ -125,7 +125,7 @@ class AsciidoctorPDFExtensions < (Asciidoctor::Converter.for 'pdf')
     # Determine font settings based on node type
     if node_context.is_a?(Asciidoctor::Section)
       # Explicitly handle section headers
-      level = node_context.level + 1
+      level = node_context.level.next
       font_family = theme["heading_h#{level}_font_family"] || theme['heading_font_family'] || theme['base_font_family'] || 'Arial'
       font_style = theme["heading_h#{level}_font_style"] || theme['heading_font_style'] || theme['base_font_style'] || 'normal'
       font_size = theme["heading_h#{level}_font_size"] || theme['heading_font_size'] || theme['base_font_size'] || 12
