@@ -71,8 +71,10 @@ class AsciidoctorPDFExtensions < (Asciidoctor::Converter.for 'pdf')
 
     puts "DEBUG: convert inline_quoted #{node.type} node '#{node.text[0..20]}'"
 
+    theme = (load_theme node.document)
+
     svg_output, error = stem_to_svg(latex_content)
-    adjusted_svg, svg_width = adjust_svg_to_match_text_baseline(svg_output, node, @theme)
+    adjusted_svg, svg_width = adjust_svg_to_match_text_baseline(svg_output, node, theme)
     if adjusted_svg.nil? || adjusted_svg.empty?
       puts "DEBUG: Error processing stem: #{error || 'No SVG output'}"
       return super
@@ -117,7 +119,7 @@ class AsciidoctorPDFExtensions < (Asciidoctor::Converter.for 'pdf')
     # Determine font settings based on node type
     if node_context.is_a?(Asciidoctor::Section)
       # Explicitly handle section headers
-      level = node_context.level
+      level = node_context.level + 1
       font_family = theme["heading_h#{level}_font_family"] || theme['heading_font_family'] || theme['base_font_family'] || 'Arial'
       font_style = theme["heading_h#{level}_font_style"] || theme['heading_font_style'] || theme['base_font_style'] || 'normal'
       font_size = theme["heading_h#{level}_font_size"] || theme['heading_font_size'] || theme['base_font_size'] || 12
@@ -146,7 +148,7 @@ class AsciidoctorPDFExtensions < (Asciidoctor::Converter.for 'pdf')
     embedding_text_height = total_height / units_per_em * font_size
     embedding_text_baseline_height = descender_height / units_per_em * font_size
 
-    puts "Embedding in font #{font_family}-#{font_style} size #{font_size}pt (text height: #{embedding_text_height.round(2)}pt, baseline #{embedding_text_baseline_height.round(2)}pt)"
+    puts "DEBUG: Embedding in font #{font_family}-#{font_style} size #{font_size}pt (text height: #{embedding_text_height.round(2)}pt, baseline #{embedding_text_baseline_height.round(2)}pt)"
 
 
 
@@ -168,9 +170,9 @@ class AsciidoctorPDFExtensions < (Asciidoctor::Converter.for 'pdf')
     svg_relative_height_difference = embedding_text_height / svg_height
     embedding_text_relative_baseline_height = embedding_text_baseline_height / embedding_text_height
 
-    puts "DEBUG: Original SVG height: #{svg_height}, width: #{svg_width}, inner height: #{svg_inner_height}, inner offset: #{svg_inner_offset}"
+    puts "DEBUG: Original SVG height: #{svg_height.round(2)}, width: #{svg_width.round(2)}, inner height: #{svg_inner_height.round(2)}, inner offset: #{svg_inner_offset.round(2)}"
     if svg_height_difference < 0
-      puts "DEBUG: SVG height is greater than embedding text height: #{svg_height} > #{embedding_text_height}"
+      puts "DEBUG: SVG height is greater than embedding text height: #{svg_height.round(2)} > #{embedding_text_height.round(2)}"
 
       svg_relative_portion_extending_embedding_text_below = (1 - svg_relative_height_difference) / 2
       svg_relative_baseline_height = embedding_text_relative_baseline_height * svg_relative_height_difference
@@ -178,7 +180,7 @@ class AsciidoctorPDFExtensions < (Asciidoctor::Converter.for 'pdf')
 
       svg_inner_offset = svg_inner_relative_offset * svg_inner_height
     else
-      puts "DEBUG: SVG height is less than embedding text height: #{svg_height} < #{embedding_text_height}"
+      puts "DEBUG: SVG height is less than embedding text height: #{svg_height.round(2)} < #{embedding_text_height.round(2)}"
       svg_height = embedding_text_height
       svg_inner_height = svg_relative_height_difference * svg_inner_height
       svg_inner_offset = (embedding_text_relative_baseline_height - 1) * svg_inner_height
@@ -191,7 +193,7 @@ class AsciidoctorPDFExtensions < (Asciidoctor::Converter.for 'pdf')
     svg_doc.root.attributes['width'] = "#{svg_width / EX_TO_PT}ex"
     svg_doc.root.attributes.delete('style')
 
-    puts "DEBUG: Adjusted SVG height: #{svg_height}, width: #{svg_width}, inner height: #{svg_inner_height}, inner offset: #{svg_inner_offset}"
+    puts "DEBUG: Adjusted SVG height: #{svg_height.round(2)}, width: #{svg_width.round(2)}, inner height: #{svg_inner_height.round(2)}, inner offset: #{svg_inner_offset.round(2)}"
 
     [svg_doc.to_s, svg_width]
   rescue => e

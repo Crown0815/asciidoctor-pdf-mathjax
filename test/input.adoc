@@ -38,6 +38,8 @@ Example 3: stem:[x_1^2]
 
 Example 4: stem:[\_]
 
+Example 5: stem:[\sum_{{{i}={1}}}^{{n}}{i}^{3}={\left(\frac{{{n}{\left({n}+{1}\right)}}}{{2}}\right)}^{2}]
+
 == LaTeX Math
 
 === Block
@@ -61,6 +63,8 @@ Example 2: latexmath:[y^2]
 Example 3: latexmath:[x_1^2]
 
 Example 4: latexmath:[\_]
+
+Example 5: latexmath:[\sum_{{{i}={1}}}^{{n}}{i}^{3}={\left(\frac{{{n}{\left({n}+{1}\right)}}}{{2}}\right)}^{2}]
 
 == ASCIIMATH
 
