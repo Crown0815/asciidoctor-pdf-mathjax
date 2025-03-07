@@ -37,6 +37,15 @@ E = mc^2
 \sum_{{{i}={1}}}^{{n}}{i}^{3}={\left(\frac{{{n}{\left({n}+{1}\right)}}}{{2}}\right)}^{2}
 ++++
 
+[stem]
+++++
+\begin{align}
+a &= \text{text1} \\
+b &> \text{text2} \\
+c &< \text{text3}
+\end{align}
+++++
+
 === Inline
 
 Example: stem:[x^2]
@@ -73,6 +82,15 @@ E = mc^2
 [latexmath]
 ++++
 \sum_{{{i}={1}}}^{{n}}{i}^{3}={\left(\frac{{{n}{\left({n}+{1}\right)}}}{{2}}\right)}^{2}
+++++
+
+[latexmath]
+++++
+\begin{align}
+a &= \text{text1} \\
+b &> \text{text2} \\
+c &< \text{text3}
+\end{align}
 ++++
 
 === Inline

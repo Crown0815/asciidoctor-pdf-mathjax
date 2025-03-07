@@ -20,14 +20,7 @@ class AsciidoctorPDFExtensions < (Asciidoctor::Converter.for 'pdf')
     arrange_block node do |extent|
       add_dest_for_block node if node.id
 
-      case node.style.to_sym
-      when :latexmath
-        latex_content = node.content.strip
-      when :asciimath
-        latex_content = AsciiMath.parse(node.content.strip).to_latex
-      else
-        return super
-      end
+      latex_content = extract_latex_content(node.content, node.style.to_sym)
 
       svg_output, error = stem_to_svg(latex_content, false)
 
@@ -50,7 +43,7 @@ class AsciidoctorPDFExtensions < (Asciidoctor::Converter.for 'pdf')
           pad_box @theme.code_padding, node do
             begin
               image_obj = image svg_file.path, position: :center
-              logger.debug "Successfully embedded stem block #{node.content.strip} as SVG image" if image_obj
+              logger.debug "Successfully embedded stem block (as latex) #{latex_content} as SVG image" if image_obj
             rescue Prawn::Errors::UnsupportedImageType => e
               logger.warn "Unsupported image type error: #{e.message}"
             rescue StandardError => e
@@ -66,14 +59,8 @@ class AsciidoctorPDFExtensions < (Asciidoctor::Converter.for 'pdf')
   end
 
   def convert_inline_quoted node
-    case node.type
-    when :latexmath
-      latex_content = node.text
-    when :asciimath
-      latex_content = AsciiMath.parse(node.text).to_latex
-    else
-      return super
-    end
+    latex_content = extract_latex_content(node.text, node.type)
+    return super if latex_content.nil?
 
     theme = (load_theme node.document)
 
@@ -100,6 +87,18 @@ class AsciidoctorPDFExtensions < (Asciidoctor::Converter.for 'pdf')
   end
 
   private
+
+  def extract_latex_content(content, type)
+    content = content.strip.gsub("&amp;", "&").gsub("&lt;", "<").gsub("&gt;", ">")
+    case type
+    when :latexmath
+      return content
+    when :asciimath
+      return AsciiMath.parse(content).to_latex
+    else
+      return nil
+    end
+  end
 
   def adjust_svg_color(svg_output, font_color)
     svg_output.gsub(MATHJAX_DEFAULT_COLOR_STRING, "##{font_color}")
