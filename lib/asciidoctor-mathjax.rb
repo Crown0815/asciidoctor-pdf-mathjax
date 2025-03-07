@@ -32,7 +32,7 @@ class AsciidoctorPDFExtensions < (Asciidoctor::Converter.for 'pdf')
       svg_output, error = stem_to_svg(latex_content, false)
 
       if svg_output.nil? || svg_output.empty?
-        warn "Failed to convert STEM to SVG: #{error} (Fallback to code block)"
+        logger.warn "Failed to convert STEM to SVG: #{error} (Fallback to code block)"
         pad_box @theme.code_padding, node do
           theme_font :code do
             typeset_formatted_text [{ text: (guard_indentation latex_content), color: @font_color }],
@@ -41,8 +41,6 @@ class AsciidoctorPDFExtensions < (Asciidoctor::Converter.for 'pdf')
           end
         end
       else
-        puts "DEBUG: Successfully converted STEM block with content #{latex_content} to SVG"
-
         svg_output = adjust_svg_color(svg_output, @font_color)
         svg_file = Tempfile.new(['stem', '.svg'])
         begin
@@ -52,11 +50,11 @@ class AsciidoctorPDFExtensions < (Asciidoctor::Converter.for 'pdf')
           pad_box @theme.code_padding, node do
             begin
               image_obj = image svg_file.path, position: :center
-              puts "DEBUG: Successfully embedded SVG image" if image_obj
+              logger.debug "Successfully embedded stem block #{node.content.strip} as SVG image" if image_obj
             rescue Prawn::Errors::UnsupportedImageType => e
-              warn "Unsupported image type error: #{e.message}"
+              logger.warn "Unsupported image type error: #{e.message}"
             rescue StandardError => e
-              warn "Failed embedding SVG: #{e.message}"
+              logger.warn "Failed embedding SVG: #{e.message}"
             end
           end
         ensure
@@ -77,14 +75,12 @@ class AsciidoctorPDFExtensions < (Asciidoctor::Converter.for 'pdf')
       return super
     end
 
-    puts "DEBUG: convert inline_quoted #{node.type} node '#{node.text[0..20]}'"
-
     theme = (load_theme node.document)
 
     svg_output, error = stem_to_svg(latex_content, true)
     adjusted_svg, svg_width = adjust_svg_to_match_text(svg_output, node, theme)
     if adjusted_svg.nil? || adjusted_svg.empty?
-      puts "DEBUG: Error processing stem: #{error || 'No SVG output'}"
+      logger.warn "Error processing stem: #{error || 'No SVG output'}"
       return super
     end
 
@@ -94,11 +90,11 @@ class AsciidoctorPDFExtensions < (Asciidoctor::Converter.for 'pdf')
       tmp_svg.write(adjusted_svg)
       tmp_svg.close
 
-      puts "DEBUG: Writing <img src=\"#{tmp_svg.path}\" format=\"svg\" width=\"#{svg_width}\" alt=\"#{node.text}\">"
+      logger.debug "Successfully embedded stem inline #{node.text} as SVG image"
       quoted_text = "<img src=\"#{tmp_svg.path}\" format=\"svg\" width=\"#{svg_width}\" alt=\"#{node.text}\">"
       node.id ? %(<a id="#{node.id}">#{DummyText}</a>#{quoted_text}) : quoted_text
     rescue => e
-      puts "DEBUG: Failed to process SVG: #{e.message}"
+      logger.warn "Failed to process SVG: #{e.message}"
       super
     end
   end
@@ -122,7 +118,7 @@ class AsciidoctorPDFExtensions < (Asciidoctor::Converter.for 'pdf')
 
   def adjust_svg_to_match_text(svg_content, node, theme)
     node_context = find_font_context(node)
-    puts "DEBUG: Found font context: #{node_context} for node #{node}"
+    logger.debug "Found font context #{node_context} for node #{node}"
 
     if node_context.is_a?(Asciidoctor::Section)
       level = node_context.level.next
@@ -168,10 +164,6 @@ class AsciidoctorPDFExtensions < (Asciidoctor::Converter.for 'pdf')
     embedding_text_height = total_height / units_per_em * font_size
     embedding_text_baseline_height = descender_height / units_per_em * font_size
 
-    puts "DEBUG: Embedding in font #{font_family}-#{font_style} size #{font_size}pt (text height: #{embedding_text_height.round(2)}pt, baseline #{embedding_text_baseline_height.round(2)}pt)"
-
-
-
     svg_doc = REXML::Document.new(svg_content)
     svg_width = svg_doc.root.attributes['width'].to_f * POINTS_PER_EX || raise("No width found in SVG")
     svg_height = svg_doc.root.attributes['height'].to_f * POINTS_PER_EX || raise("No height found in SVG")
@@ -190,17 +182,15 @@ class AsciidoctorPDFExtensions < (Asciidoctor::Converter.for 'pdf')
     svg_relative_height_difference = embedding_text_height / svg_height
     embedding_text_relative_baseline_height = embedding_text_baseline_height / embedding_text_height
 
-    puts "DEBUG: Original SVG height: #{svg_height.round(2)}, width: #{svg_width.round(2)}, inner height: #{svg_inner_height.round(2)}, inner offset: #{svg_inner_offset.round(2)}"
+    logger.debug "Original SVG height: #{svg_height.round(2)}, width: #{svg_width.round(2)}, inner height: #{svg_inner_height.round(2)}, inner offset: #{svg_inner_offset.round(2)}"
+    logger.debug "Embedding SVG in #{font_family}-#{font_style} size #{font_size}pt (height: #{embedding_text_height.round(2)}pt, baseline #{embedding_text_baseline_height.round(2)}pt)"
     if svg_height_difference < 0
-      puts "DEBUG: SVG height is greater than embedding text height: #{svg_height.round(2)} > #{embedding_text_height.round(2)}"
-
       svg_relative_portion_extending_embedding_text_below = (1 - svg_relative_height_difference) / 2
       svg_relative_baseline_height = embedding_text_relative_baseline_height * svg_relative_height_difference
       svg_inner_relative_offset = svg_relative_baseline_height + svg_relative_portion_extending_embedding_text_below - 1
 
       svg_inner_offset = svg_inner_relative_offset * svg_inner_height
     else
-      puts "DEBUG: SVG height is less than embedding text height: #{svg_height.round(2)} < #{embedding_text_height.round(2)}"
       svg_height = embedding_text_height
       svg_inner_height = svg_relative_height_difference * svg_inner_height
       svg_inner_offset = (embedding_text_relative_baseline_height - 1) * svg_inner_height
@@ -213,12 +203,12 @@ class AsciidoctorPDFExtensions < (Asciidoctor::Converter.for 'pdf')
     svg_doc.root.attributes['width'] = "#{svg_width / POINTS_PER_EX}ex"
     svg_doc.root.attributes.delete('style')
 
-    puts "DEBUG: Adjusted SVG height: #{svg_height.round(2)}, width: #{svg_width.round(2)}, inner height: #{svg_inner_height.round(2)}, inner offset: #{svg_inner_offset.round(2)}"
+    logger.debug "Adjusted SVG height: #{svg_height.round(2)}, width: #{svg_width.round(2)}, inner height: #{svg_inner_height.round(2)}, inner offset: #{svg_inner_offset.round(2)}"
     svg_output = adjust_svg_color(svg_doc.to_s, font_color)
 
     [svg_output, svg_width]
   rescue => e
-    puts "DEBUG: Failed to adjust SVG baseline: #{e.full_message}"
+    logger.warn "Failed to adjust SVG baseline: #{e.full_message}"
     nil # Fallback to original if adjustment fails
   end
 
