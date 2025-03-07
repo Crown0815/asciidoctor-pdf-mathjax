@@ -34,3 +34,7 @@ ij_asciidoc_blank_lines_after_header = 1
 ij_asciidoc_blank_lines_keep_after_header = 1
 ij_asciidoc_formatting_enabled = true
 ij_asciidoc_one_sentence_per_line = true
+
+[*.md]
+indent_size = 3
+trim_trailing_whitespace = false
