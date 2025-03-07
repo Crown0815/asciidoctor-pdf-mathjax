@@ -6,6 +6,7 @@ require 'ttfunk'
 require 'asciimath'
 
 POINTS_PER_EX = 6
+MATHJAX_DEFAULT_COLOR_STRING = "currentColor"
 
 class AsciidoctorPDFExtensions < (Asciidoctor::Converter.for 'pdf')
   register_for 'pdf'
@@ -42,7 +43,7 @@ class AsciidoctorPDFExtensions < (Asciidoctor::Converter.for 'pdf')
       else
         puts "DEBUG: Successfully converted STEM block with content #{latex_content} to SVG"
 
-        svg_output = svg_output.gsub("currentColor", "##{@font_color}")
+        svg_output = adjust_svg_color(svg_output, @font_color)
         svg_file = Tempfile.new(['stem', '.svg'])
         begin
           svg_file.write(svg_output)
@@ -81,7 +82,7 @@ class AsciidoctorPDFExtensions < (Asciidoctor::Converter.for 'pdf')
     theme = (load_theme node.document)
 
     svg_output, error = stem_to_svg(latex_content, true)
-    adjusted_svg, svg_width = adjust_svg_to_match_text_baseline(svg_output, node, theme)
+    adjusted_svg, svg_width = adjust_svg_to_match_text(svg_output, node, theme)
     if adjusted_svg.nil? || adjusted_svg.empty?
       puts "DEBUG: Error processing stem: #{error || 'No SVG output'}"
       return super
@@ -104,6 +105,10 @@ class AsciidoctorPDFExtensions < (Asciidoctor::Converter.for 'pdf')
 
   private
 
+  def adjust_svg_color(svg_output, font_color)
+    svg_output.gsub(MATHJAX_DEFAULT_COLOR_STRING, "##{font_color}")
+  end
+
   def stem_to_svg(latex_content, is_inline)
     js_script = File.join(File.dirname(__FILE__), '../bin/render.js')
     svg_output, error = nil, nil
@@ -115,7 +120,7 @@ class AsciidoctorPDFExtensions < (Asciidoctor::Converter.for 'pdf')
     [svg_output, error]
   end
 
-  def adjust_svg_to_match_text_baseline(svg_content, node, theme)
+  def adjust_svg_to_match_text(svg_content, node, theme)
     node_context = find_font_context(node)
     puts "DEBUG: Found font context: #{node_context} for node #{node}"
 
@@ -207,12 +212,11 @@ class AsciidoctorPDFExtensions < (Asciidoctor::Converter.for 'pdf')
     svg_doc.root.attributes['height'] = "#{svg_height / POINTS_PER_EX}ex"
     svg_doc.root.attributes['width'] = "#{svg_width / POINTS_PER_EX}ex"
     svg_doc.root.attributes.delete('style')
-    svg_content = svg_doc.to_s
-    svg_content = svg_content.gsub("currentColor", "##{font_color}")
 
     puts "DEBUG: Adjusted SVG height: #{svg_height.round(2)}, width: #{svg_width.round(2)}, inner height: #{svg_inner_height.round(2)}, inner offset: #{svg_inner_offset.round(2)}"
+    svg_output = adjust_svg_color(svg_doc.to_s, font_color)
 
-    [svg_content, svg_width]
+    [svg_output, svg_width]
   rescue => e
     puts "DEBUG: Failed to adjust SVG baseline: #{e.full_message}"
     nil # Fallback to original if adjustment fails
