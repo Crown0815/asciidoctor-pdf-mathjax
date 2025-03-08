@@ -14,5 +14,8 @@ Gem::Specification.new do |spec|
   spec.require_paths = ['lib']
 
   spec.add_dependency 'asciidoctor', '~> 2.0'
+  spec.add_dependency 'asciidoctor-pdf', '~> 2.3', '>= 2.3.19'
+  spec.add_dependency 'nokogiri', '~> 1.18', '>= 1.18.3'
   spec.add_development_dependency 'bundler', '~> 2.0'
+  spec.add_development_dependency 'rake', '~> 13.0'
 end

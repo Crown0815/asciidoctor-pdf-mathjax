@@ -19,19 +19,12 @@ This tool bridges the gap between Asciidoctor's native PDF generation and the ne
 ### Prerequisites
 
 - [Ruby](https://www.ruby-lang.org/) 2.7 or higher
-- [Asciidoctor](https://asciidoctor.org/) ([installation instructions](https://docs.asciidoctor.org/asciidoctor/latest/install/))
-- [Asciidoctor PDF](https://github.com/asciidoctor/asciidoctor-pdf) ([installation instructions](https://github.com/asciidoctor/asciidoctor-pdf?tab=readme-ov-file#prerequisites))
+- [Asciidoctor](https://asciidoctor.org/) and [Asciidoctor PDF](https://github.com/asciidoctor/asciidoctor-pdf) ([installation instructions](https://github.com/asciidoctor/asciidoctor-pdf?tab=readme-ov-file#prerequisites))
 - [NodeJS](https://nodejs.org/en)
 - [MathJax Node](https://github.com/mathjax/MathJax-node) (`npm install -g mathjax-node`)
-- [NokoGiri](https://nokogiri.org/index) (`gem install nokogiri`)
-- [TTFunk](https://github.com/prawnpdf/ttfunk) (`gem install ttfunk`)
-
-When working with AsciiMath, you also need to install
-
-- [AsciiDoctor AsciiMath](https://github.com/asciidoctor/asciimath)(`gem install asciimath`)
 
 A good starting point is using the [Asciidoctor Docker Container](https://github.com/asciidoctor/docker-asciidoctor), which comes with most dependencies pre-installed.
-You can find an example on how to use the docker container in [this Dockerfile](test/Dockerfile).
+You can find an example of a docker container configuration for Asciidoctor PDF MathJax in [this Dockerfile](test/Dockerfile).
 
 ## Usage
 
