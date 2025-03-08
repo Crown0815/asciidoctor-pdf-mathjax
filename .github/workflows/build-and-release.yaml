@@ -1,0 +1,53 @@
+name: Build and Release Gem
+
+on:
+    push:
+        branches:
+            - main
+    pull_request:
+        branches:
+            - main
+
+jobs:
+    build:
+        runs-on: ubuntu-latest
+
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
+
+            - name: Set up Ruby
+              uses: ruby/setup-ruby@v1
+              with:
+                  ruby-version: '2.7'
+
+            - name: Install dependencies
+              run: bundle install
+
+            - name: Run tests
+              run: bundle exec rake test
+
+    release:
+        needs: build
+        runs-on: ubuntu-latest
+        if: github.event_name == 'push' && github.ref_name == 'main'
+
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
+
+            - name: Set up Ruby
+              uses: ruby/setup-ruby@v1
+              with:
+                  ruby-version: '2.7'
+
+            - name: Install dependencies
+              run: bundle install
+
+            - name: Build gem
+              run: gem build asciidoctor-pdf-mathjax.gemspec
+
+            - name: Publish gem
+              env:
+                  GEM_HOST_API_KEY: ${{ secrets.RUBYGEMS_API_KEY }}
+              run: gem push asciidoctor-pdf-mathjax-*.gem
