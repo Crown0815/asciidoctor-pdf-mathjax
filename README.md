@@ -21,7 +21,11 @@ This tool bridges the gap between Asciidoctor's native PDF generation and the ne
 - [Ruby](https://www.ruby-lang.org/) 2.7 or higher
 - [Asciidoctor](https://asciidoctor.org/) and [Asciidoctor PDF](https://github.com/asciidoctor/asciidoctor-pdf) ([installation instructions](https://github.com/asciidoctor/asciidoctor-pdf?tab=readme-ov-file#prerequisites))
 - [NodeJS](https://nodejs.org/en)
-- [MathJax Node](https://github.com/mathjax/MathJax-node) (`npm install -g mathjax-node`)
+- [MathJax Node](https://github.com/mathjax/MathJax-node) (required for PDF generation with LaTeX).
+  Install it globally with
+  ```sh
+  npm install -g mathjax-node
+  ```
 
 A good starting point is using the [Asciidoctor Docker Container](https://github.com/asciidoctor/docker-asciidoctor), which comes with most dependencies pre-installed.
 You can find an example of a docker container configuration for Asciidoctor PDF MathJax in [this Dockerfile](test/Dockerfile).

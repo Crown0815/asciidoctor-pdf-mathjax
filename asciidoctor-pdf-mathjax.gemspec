@@ -1,5 +1,5 @@
 Gem::Specification.new do |spec|
-  spec.name          = 'asciidoctor-mathjax'
+  spec.name          = 'asciidoctor-pdf-mathjax'
   spec.version       = '0.1.0'
   spec.authors       = ['Your Name']
   spec.email         = ['your.email@example.com']
@@ -18,4 +18,12 @@ Gem::Specification.new do |spec|
   spec.add_dependency 'nokogiri', '~> 1.18', '>= 1.18.3'
   spec.add_development_dependency 'bundler', '~> 2.0'
   spec.add_development_dependency 'rake', '~> 13.0'
+
+  spec.post_install_message = <<~MSG
+    Thank you for installing #{spec.name}!
+    Note: This gem requires MathJax-Node for full functionality (e.g., LaTeX rendering).
+    If you haven't installed it, run:
+      npm install -g mathjax-node
+    See the README for details.
+  MSG
 end
