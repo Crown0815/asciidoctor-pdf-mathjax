@@ -7,7 +7,7 @@ Gem::Specification.new do |spec|
   spec.description   = 'Converts STEM blocks and inline macros to SVG images using MathJax-node for AsciiDoctor PDF.'
   spec.homepage      = 'https://github.com/yourusername/asciidoctor-mathjax'
   spec.license       = 'MIT'
-  spec.required_ruby_version = '>= 3.0'
+  spec.required_ruby_version = '>= 2.7'
 
   spec.files = Dir['lib/**/*', 'bin/**/*']
   spec.executables   = ['render.js']
