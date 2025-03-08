@@ -8,6 +8,11 @@ require 'asciimath'
 POINTS_PER_EX = 6
 MATHJAX_DEFAULT_COLOR_STRING = "currentColor"
 
+FALLBACK_FONT_SIZE = 12
+FALLBACK_FONT_STYLE = 'normal'
+FALLBACK_FONT_FAMILY = 'Arial'
+FALLBACK_FONT_COLOR = '#000000'
+
 class AsciidoctorPDFExtensions < (Asciidoctor::Converter.for 'pdf')
   register_for 'pdf'
 
@@ -126,10 +131,10 @@ class AsciidoctorPDFExtensions < (Asciidoctor::Converter.for 'pdf')
         theme_key = 'abstract_title'
       end
 
-      font_family = theme["#{theme_key}_font_family"] || theme['heading_font_family'] || theme['base_font_family'] || 'Arial'
-      font_style = theme["#{theme_key}_font_style"] || theme['heading_font_style'] || theme['base_font_style'] || 'normal'
-      font_size = theme["#{theme_key}_font_size"] || theme['heading_font_size'] || theme['base_font_size'] || 12
-      font_color = theme["#{theme_key}_font_color"] || theme['heading_font_color'] || theme['base_font_color'] || '#000000'
+      font_family = theme["#{theme_key}_font_family"] || theme['heading_font_family'] || theme['base_font_family'] || FALLBACK_FONT_FAMILY
+      font_style = theme["#{theme_key}_font_style"] || theme['heading_font_style'] || theme['base_font_style'] || FALLBACK_FONT_STYLE
+      font_size = theme["#{theme_key}_font_size"] || theme['heading_font_size'] || theme['base_font_size'] || FALLBACK_FONT_SIZE
+      font_color = theme["#{theme_key}_font_color"] || theme['heading_font_color'] || theme['base_font_color'] || FALLBACK_FONT_COLOR
     else
       if node_context.parent.is_a?(Asciidoctor::Section) && node_context.parent.sectname == 'abstract'
         theme_key = :abstract
@@ -143,10 +148,10 @@ class AsciidoctorPDFExtensions < (Asciidoctor::Converter.for 'pdf')
       font_color = nil
       converter = node_context.converter
       converter.theme_font theme_key do
-        font_family = converter.font_family || 'Arial'
-        font_style = converter.font_style || 'normal'
-        font_size = converter.font_size || 12
-        font_color = converter.font_color || '#000000'
+        font_family = converter.font_family || FALLBACK_FONT_FAMILY
+        font_style = converter.font_style || FALLBACK_FONT_STYLE
+        font_size = converter.font_size || FALLBACK_FONT_SIZE
+        font_color = converter.font_color || FALLBACK_FONT_COLOR
       end
     end
 
@@ -170,7 +175,7 @@ class AsciidoctorPDFExtensions < (Asciidoctor::Converter.for 'pdf')
     svg_inner_offset = view_box[1]
     svg_inner_height = view_box[3]
 
-    svg_default_font_size = 12
+    svg_default_font_size = FALLBACK_FONT_SIZE
 
     # Adjust SVG height and width so that math font matches embedding text
     scaling_factor = font_size.to_f / svg_default_font_size
