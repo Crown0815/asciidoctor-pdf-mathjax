@@ -6,7 +6,6 @@ function convert {
     --require asciidoctor-mathjax \
     --attribute root="${PWD}" \
     --failure-level=INFO \
-    --verbose \
     --trace \
     "./verification/$file.adoc"
 }
@@ -18,9 +17,10 @@ function verify {
   local diff=./verification/"$test_case".diff.pdf
 
   if xvfb-run diff-pdf --output-diff="$diff" "$received" "$verified" ; then
-      echo "PASS: Verification of $test_case.adoc"
+    rm "$diff"
+    echo "PASS: Verification of $test_case.adoc"
   else
-      >&2 echo "FAILED: Verification of $test_case.adoc"
+    >&2 echo "FAILED: Verification of $test_case.adoc"
   fi
 }
 
