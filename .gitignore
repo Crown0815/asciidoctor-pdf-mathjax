@@ -4,6 +4,7 @@
 # Generated PDFs and SVGs
 *.pdf
 *.svg
+!*.verified.pdf
 
 # Ruby gem packaging
 *.gem

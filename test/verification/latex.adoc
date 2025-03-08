@@ -1,0 +1,73 @@
+= Level 0 Header latexmath:[x_0^2]
+:stem:
+:pdf-themesdir: {root}/theme
+:imagesdir: {root}/media
+:pdf-theme: test
+
+[abstract]
+== Abstract Header latexmath:[x_a^2]
+
+First Line Example latexmath:[x_{a1}^2]
+
+Second Line Example latexmath:[x_{a2}^2]
+
+== Level 1 Header latexmath:[x_1^2]
+
+=== Level 2 Header latexmath:[x_2^2]
+
+==== Level 3 Header latexmath:[x_3^2]
+
+===== Level 4 Header latexmath:[x_4^2]
+
+====== Level 5 Header latexmath:[x_5^2]
+
+
+<<<
+== LaTeX Math
+
+=== Block
+
+[latexmath]
+++++
+E = mc^2
+++++
+
+[latexmath]
+++++
+\sum_{{{i}={1}}}^{{n}}{i}^{3}={\left(\frac{{{n}{\left({n}+{1}\right)}}}{{2}}\right)}^{2}
+++++
+
+[latexmath]
+++++
+\begin{align}
+a &= \text{text1} \\
+b &> \text{text2} \\
+c &< \text{text3}
+\end{align}
+++++
+
+=== Inline
+
+Example 1: latexmath:[x^2]
+
+Example 2: latexmath:[y^2]
+
+Example 3: latexmath:[x_1^2]
+
+Example 4: latexmath:[\_]
+
+Example 5: latexmath:[\sum_{{{i}={1}}}^{{n}}{i}^{3}={\left(\frac{{{n}{\left({n}+{1}\right)}}}{{2}}\right)}^{2}]
+
+Example 6: latexmath:[\frac{a}{b}]
+
+=== List
+
+. Example latexmath:[x^2]
+
+{empty}
+
+* Example latexmath:[x^2]
+
+=== Callouts
+
+WARNING: Example latexmath:[z^2]

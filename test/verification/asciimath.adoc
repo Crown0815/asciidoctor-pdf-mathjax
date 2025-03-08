@@ -1,0 +1,63 @@
+= Level 0 Header asciimath:[x_0^2]
+:stem:
+:pdf-themesdir: {root}/theme
+:imagesdir: {root}/media
+:pdf-theme: test
+
+[abstract]
+== Abstract Header asciimath:[x_a^2]
+
+First Line Example asciimath:[x_{a1}^2]
+
+Second Line Example asciimath:[x_{a2}^2]
+
+== Level 1 Header asciimath:[x_1^2]
+
+=== Level 2 Header asciimath:[x_2^2]
+
+==== Level 3 Header asciimath:[x_3^2]
+
+===== Level 4 Header asciimath:[x_4^2]
+
+====== Level 5 Header asciimath:[x_5^2]
+
+<<<
+== ASCIIMATH
+
+=== Block
+
+[asciimath]
+++++
+E = mc^2
+++++
+
+[asciimath]
+++++
+sum_(i=1)^n i^3=((n(n+1))/2)^2
+++++
+
+=== Inline
+
+Example 1: asciimath:[x^2]
+
+Example 2: asciimath:[y^2]
+
+Example 3: asciimath:[x_1^2]
+
+Example 4: asciimath:[\_]
+
+Example 5: asciimath:[sum_(i=1)^n i^3=((n(n+1))/2)^2]
+
+Example 6: asciimath:[a/b]
+
+=== List
+
+. Example asciimath:[x^2]
+
+{empty}
+
+* Example asciimath:[x^2]
+
+=== Callouts
+
+WARNING: Example asciimath:[z^2]
