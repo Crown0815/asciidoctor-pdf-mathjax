@@ -12,7 +12,7 @@ This tool bridges the gap between Asciidoctor's native PDF generation and the ne
 - **Seamless MathJax Integration**: Converts AsciiMath and LaTeX expressions into SVG or raster images compatible with Asciidoctor PDF.
 - **Cross-Platform Support**: Works with Asciidoctor’s PDF backend to produce consistent output across platforms.
 - **Customizable Rendering**: Adjust MathJax settings for font size, style, and output format.
-- **Support for Inline and Block Equations**: Render both inline (`stem:[x^2]`) and block equations (`[stem] \n++++\n\sqrt{a^2 + b^2}\n++++`) effortlessly.
+- **Support for Inline and Block Equations**: Render both [inline](https://docs.asciidoctor.org/asciidoc/latest/stem/#inline) and [block](https://docs.asciidoctor.org/asciidoc/latest/stem/#block) STEM content effortlessly.
 
 ## Installation
 
