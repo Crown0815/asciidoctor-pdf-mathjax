@@ -2,16 +2,12 @@
 
 function convert {
   local test_file="$1"
-  if asciidoctor-pdf \
+  asciidoctor-pdf \
     --require asciidoctor-mathjax \
     --attribute root="${PWD}" \
     --failure-level=INFO \
     --trace \
-    "$test_file"; then
-    echo "PASS: Conversion of $test_file.adoc"
-  else
-    >&2 echo "FAILED: Conversion of $test_file.adoc"
-  fi
+    "$test_file"
 }
 
 function verify {
@@ -25,20 +21,23 @@ function verify {
     echo "PASS: Verification of $test_file.adoc"
   else
     >&2 echo "FAILED: Verification of $test_file.adoc"
+    return 1
   fi
 }
 
 
-gem install ./asciidoctor-mathjax-test.gem
+gem install ./asciidoctor-pdf-mathjax-test.gem
+tests=0
+success=0
 
-export -f test
 export -f convert
-export -f verify
 
 echo "Running tests..."
 find "$1"/[!_]*.adoc | parallel --will-cite --halt-on-error 2 convert {}
 for file in "$1"/[!_]*.adoc; do
+  (( tests+=1 ))
   test_case="${file%.adoc}"
-  verify "$test_case"
+  verify "$test_case" && (( success+=1 ))
 done
-echo "Completed tests!"
+echo "Passed ($success/$tests) tests!"
+exit $(( tests-success ))
