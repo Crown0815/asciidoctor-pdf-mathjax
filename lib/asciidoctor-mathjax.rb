@@ -22,7 +22,7 @@ class AsciidoctorPDFExtensions < (Asciidoctor::Converter.for 'pdf')
   end
 
   def convert_stem node
-    arrange_block node do |extent|
+    arrange_block node do |_|
       add_dest_for_block node if node.id
 
       latex_content = extract_latex_content(node.content, node.style.to_sym)
