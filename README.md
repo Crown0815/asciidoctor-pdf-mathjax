@@ -52,7 +52,7 @@ Found a bug or have a suggestion? Please open an issue on the [GitHub Issues pag
 
 ## How the alignment works
 
-![alignment-logic.png](alignment-logic.png)
+![alignment-logic.png](alignment-logic.excalidraw.png)
 
 ## Acknowledgements
 

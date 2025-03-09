@@ -187,7 +187,6 @@ class AsciidoctorPDFExtensions < (Asciidoctor::Converter.for 'pdf')
     embedding_text_relative_baseline_height = embedding_text_baseline_height / embedding_text_height
 
     logger.debug "Original SVG height: #{svg_height.round(2)}, width: #{svg_width.round(2)}, inner height: #{svg_inner_height.round(2)}, inner offset: #{svg_inner_offset.round(2)}"
-    logger.debug "Embedding SVG in #{font_family}-#{font_style} size #{font_size}pt (height: #{embedding_text_height.round(2)}pt, baseline #{embedding_text_baseline_height.round(2)}pt)"
     if svg_height_difference < 0
       svg_relative_portion_extending_embedding_text_below = (1 - svg_relative_height_difference) / 2
       svg_relative_baseline_height = embedding_text_relative_baseline_height * svg_relative_height_difference
