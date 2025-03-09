@@ -54,6 +54,11 @@ Found a bug or have a suggestion? Please open an issue on the [GitHub Issues pag
 
 ![alignment-logic.png](alignment-logic.excalidraw.png)
 
+### Known Issues
+
+- High inline math expressions may be cropped at the bottom due to the alignment logic.
+  To avoid this, consider using block math expressions.
+
 ## Acknowledgements
 
 - [Asciidoctor](https://asciidoctor.org/) for the powerful document conversion framework.
