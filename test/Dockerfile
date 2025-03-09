@@ -40,5 +40,9 @@ RUN echo "Checking PATH:" && echo $PATH \
     && echo "Testing with xvfb-run:" && xvfb-run /usr/local/bin/diff-pdf --version || echo "xvfb-run failed"
 # ---
 
+# --- Speed up tests by parallelizing them ---
+RUN apk add --upgrade parallel
+# ---
+
 WORKDIR /test/
 ENTRYPOINT ["bash", "-c", "exec \"$@\"", "--"]
