@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'minitest/autorun'
 require 'asciidoctor'
 require 'asciidoctor-pdf'
@@ -39,6 +41,8 @@ class TestAsciidoctorPdfMathjax < Minitest::Test
     diff_result = system(diff_command)
     if diff_result
       assert_equal 0, $?&.exitstatus, PDF_COMPARISON_DIFFERENT_MESSAGE
+    elsif diff_result.nil?
+      flunk "diff-pdf is not installed"
     else
       full_diff_path = File.expand_path(diff_file)
       flunk PDF_COMPARISON_DIFFERENT_MESSAGE + " (see file://#{full_diff_path})"
