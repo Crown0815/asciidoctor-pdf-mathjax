@@ -41,13 +41,12 @@ jobs:
             && make \
             && sudo make install
 
-      - name: Install Xvfb (artificial display server)
-        run: sudo apt-get install xvfb
-
-      - name: Start Xvfb
+      - name: Install and Start Xvfb (artificial display server)
         run: |
-          Xvfb :99 -screen 0 1024x768x24 &   # Start Xvfb in the background
-          echo "DISPLAY=:99" >> $GITHUB_ENV  # Set DISPLAY for subsequent steps
+          sudo apt-get install xvfb
+          Xvfb :99 -screen 0 1024x768x24 &      # Start Xvfb in the background
+          echo "DISPLAY=:99" >> $GITHUB_ENV     # Set DISPLAY for subsequent steps
+          echo "NO_AT_BRIDGE=1" >> $GITHUB_ENV  # Disable AT-SPI
 
       - name: Run tests
         run: ruby test/test_*.rb
