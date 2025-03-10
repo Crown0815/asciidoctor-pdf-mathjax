@@ -51,6 +51,15 @@ jobs:
       - name: Run tests
         run: ruby test/test_*.rb
 
+      - name: Upload test artifacts (if failure)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          path: |
+            test/*.diff.pdf
+            test/*.received.pdf
+          name: test-results
+
       - name: Build gem
         run: gem build *.gemspec
 
