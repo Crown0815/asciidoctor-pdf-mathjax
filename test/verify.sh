@@ -3,7 +3,7 @@
 function convert {
   local test_file="$1"
   asciidoctor-pdf \
-    --require asciidoctor-mathjax \
+    --require asciidoctor-pdf-mathjax \
     --attribute root="${PWD}" \
     --failure-level=INFO \
     --trace \
