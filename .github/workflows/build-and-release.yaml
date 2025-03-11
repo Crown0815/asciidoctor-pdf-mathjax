@@ -2,14 +2,14 @@ name: Build and Release Gem
 
 on:
   push:
-    branches:
-      - main
+    branches: [ '**' ]
   pull_request:
     branches:
       - main
 
 jobs:
   build:
+    name: Test and Build Gem
     runs-on: ubuntu-latest
 
     steps:
@@ -22,37 +22,64 @@ jobs:
       - name: Install dependencies
         run: bundle install
 
+      - name: Install Diff_PDF
+        run: |
+          # Install dependencies
+          sudo apt-get update
+          sudo apt-get install make automake g++
+          sudo apt-get install libpoppler-glib-dev poppler-utils libwxgtk3.2-dev
+
+          # Download diff-pdf code
+          wget https://github.com/vslavik/diff-pdf/archive/refs/tags/v0.5.2.tar.gz -O diff-pdf-0.5.2.tar.gz \
+            && tar -xzf diff-pdf-0.5.2.tar.gz \
+            && rm diff-pdf-0.5.2.tar.gz
+
+          # Build and install diff-pdf
+          cd diff-pdf-0.5.2 \
+            && ./bootstrap \
+            && ./configure \
+            && make \
+            && sudo make install
+
+      - name: Install and Start Xvfb (artificial display server)
+        run: |
+          sudo apt-get install xvfb
+          Xvfb :99 -screen 0 1024x768x24 &      # Start Xvfb in the background
+          echo "DISPLAY=:99" >> $GITHUB_ENV     # Set DISPLAY for subsequent steps
+          echo "NO_AT_BRIDGE=1" >> $GITHUB_ENV  # Disable AT-SPI
+
       - name: Run tests
-        working-directory: ./test
-        run: ./.run.sh
+        run: ruby test/test_*.rb
+
+      - name: Upload test artifacts (if failure)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          path: |
+            test/*.diff.pdf
+            test/*.received.pdf
+          name: test-results
+
+      - name: Build gem
+        run: gem build *.gemspec
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          path: '*.gem'
+          name: gem
 
   release:
+    name: Release Gem
     needs: build
     runs-on: ubuntu-latest
     if: github.event_name == 'push' && github.ref_name == 'main'
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Ruby
-        uses: ruby/setup-ruby@v1
-
-      - name: Install dependencies
-        run: bundle install
-
-      - name: Build gem
-        run: gem build asciidoctor-pdf-mathjax.gemspec
-
-      - name: Publish gem
-        env:
-          GEM_HOST_API_KEY: ${{ secrets.RUBYGEMS_API_KEY }}
-        run: |
-          mkdir -p $HOME/.gem
-          touch $HOME/.gem/credentials
-          chmod 0600 $HOME/.gem/credentials
-          printf -- "---\n:rubygems_api_key: ${GEM_HOST_API_KEY}\n" > $HOME/.gem/credentials
-          gem push *.gem
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: gem
 
       - name: Create a Release
         uses: comnoco/create-release-action@v2.0.5
@@ -62,3 +89,8 @@ jobs:
           tag_name: "v0.1.1"
           release_name: "0.1.1"
           prerelease: false
+
+      - name: Publish gem
+        env:
+          GEM_HOST_API_KEY: ${{ secrets.RUBYGEMS_API_KEY }}
+        run: gem push *.gem

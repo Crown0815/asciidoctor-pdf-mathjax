@@ -40,6 +40,14 @@ class AsciidoctorPDFExtensions < (Asciidoctor::Converter.for 'pdf')
         end
       else
         svg_output = adjust_svg_color(svg_output, @font_color)
+        svg_default_font_size = FALLBACK_FONT_SIZE
+
+        svg_doc = REXML::Document.new(svg_output)
+        svg_width = svg_doc.root.attributes['width'].to_f * POINTS_PER_EX || raise("No width found in SVG")
+
+        scaling_factor = @font_size.to_f / svg_default_font_size
+        svg_width = svg_width * scaling_factor
+
         svg_file = Tempfile.new(['stem', '.svg'])
         begin
           svg_file.write(svg_output)
@@ -47,7 +55,7 @@ class AsciidoctorPDFExtensions < (Asciidoctor::Converter.for 'pdf')
 
           pad_box @theme.code_padding, node do
             begin
-              image_obj = image svg_file.path, position: :center
+              image_obj = image svg_file.path, position: :center, width: svg_width, height: nil
               logger.debug "Successfully embedded stem block (as latex) #{latex_content} as SVG image" if image_obj
             rescue Prawn::Errors::UnsupportedImageType => e
               logger.warn "Unsupported image type error: #{e.message}"
@@ -70,12 +78,11 @@ class AsciidoctorPDFExtensions < (Asciidoctor::Converter.for 'pdf')
     theme = (load_theme node.document)
 
     svg_output, error = stem_to_svg(latex_content, true)
-    adjusted_svg, svg_width = adjust_svg_to_match_text(svg_output, node, theme)
-    if adjusted_svg.nil? || adjusted_svg.empty?
+    if svg_output.nil? || svg_output.empty?
       logger.warn "Error processing stem: #{error || 'No SVG output'}"
       return super
     end
-
+    adjusted_svg, svg_width = adjust_svg_to_match_text(svg_output, node, theme)
     tmp_svg = Tempfile.new(['stem-', '.svg'])
     self.class.tempfiles << tmp_svg
     begin
