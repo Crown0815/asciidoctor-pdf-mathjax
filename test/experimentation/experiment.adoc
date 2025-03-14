@@ -1,0 +1,19 @@
+= Experiment
+
+I
+image:./experiment-square.svg[width=5]
+p n I
+image:./experiment-square.svg[width=10]
+p n I
+image:./experiment-square.svg[width=15]
+p n I
+image:./experiment-square.svg[width=20]
+p n I
+image:./experiment-square.svg[width=25]
+p n I
+image:./experiment-square.svg[width=27]
+p n I
+image:./experiment-square.svg[width=30]
+p n I
+image:./experiment-square.svg[width=35]
+p

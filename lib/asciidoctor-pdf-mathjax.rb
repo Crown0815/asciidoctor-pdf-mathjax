@@ -199,7 +199,18 @@ class AsciidoctorPDFExtensions < (Asciidoctor::Converter.for 'pdf')
       svg_relative_baseline_height = embedding_text_relative_baseline_height * svg_relative_height_difference
       svg_inner_relative_offset = svg_relative_baseline_height + svg_relative_portion_extending_embedding_text_below - 1
 
-      svg_inner_offset = svg_inner_relative_offset * svg_inner_height
+      svg_inner_offset_new = svg_inner_relative_offset * svg_inner_height
+      svg_inner_height_padding = (svg_inner_offset - svg_inner_offset_new) * 0.25 # 25% padding to handle fractions
+      svg_inner_height_difference = 2 * svg_inner_height_padding
+      svg_inner_height_new = svg_inner_height + svg_inner_height_difference
+      svg_inner_height_relative_difference = svg_inner_height_new / svg_inner_height
+
+      logger.debug("svg_inner_offset = #{svg_inner_offset}, svg_inner_height = #{svg_inner_height}, svg_inner_offset_new = #{svg_inner_offset_new}, svg_inner_height_new = #{svg_inner_height_new}")
+      logger.debug("svg_inner_offset_diff = #{svg_inner_offset - svg_inner_offset_new}, svg_inner_offset_diff_relative = #{(svg_inner_offset - svg_inner_offset_new) / svg_inner_height}")
+
+      svg_height = svg_height * svg_inner_height_relative_difference
+      svg_inner_height = svg_inner_height_new
+      svg_inner_offset = svg_inner_offset_new - svg_inner_height_padding
     else
       svg_height = embedding_text_height
       svg_inner_height = svg_relative_height_difference * svg_inner_height

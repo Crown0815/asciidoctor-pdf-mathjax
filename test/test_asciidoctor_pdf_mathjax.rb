@@ -10,6 +10,9 @@ Minitest::Test = MiniTest::Unit::TestCase unless defined? Minitest::Test
 class TestAsciidoctorPdfMathjax < Minitest::Test
   def setup
     system("npm install --silent mathjax-node")
+
+    Asciidoctor::LoggerManager.logger = Logger.new(STDOUT)
+    Asciidoctor::LoggerManager.logger.level = Logger::DEBUG
   end
 
   def teardown

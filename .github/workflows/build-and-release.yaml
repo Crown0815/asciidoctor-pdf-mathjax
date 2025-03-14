@@ -9,9 +9,50 @@ on:
 
 jobs:
   build:
-    name: Test and Build Gem
+    name: Build Gem
     runs-on: ubuntu-latest
+    outputs:
+      semantic-version: ${{ steps.determine-version.outputs.SemVer }}
+      pre-release-label: ${{ steps.determine-version.outputs.PreReleaseLabel }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
+      - name: Install GitVersion
+        uses: gittools/actions/gitversion/setup@v3.1.11
+        with:
+          versionSpec: '6.0.x'
+
+      - name: Determine Version
+        id: determine-version
+        uses: gittools/actions/gitversion/execute@v3.1.11
+        with:
+          useConfigFile: true
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+
+      - name: Install dependencies
+        run: bundle install
+
+      - name: Update .gemspec version
+        run: |
+          sed -i "s/\(spec\.version\s*=\s*\)['\"].*['\"]/\1'${{ steps.determine-version.outputs.SemVer }}'/" *.gemspec
+
+      - name: Build gem
+        run: gem build *.gemspec
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          path: '*.gem'
+          name: gem
+
+  test:
+    name: Test Gem
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -60,18 +101,9 @@ jobs:
             test/*.received.pdf
           name: test-results
 
-      - name: Build gem
-        run: gem build *.gemspec
-
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
-        with:
-          path: '*.gem'
-          name: gem
-
   release:
     name: Release Gem
-    needs: build
+    needs: [ build, test ]
     runs-on: ubuntu-latest
     if: github.event_name == 'push' && github.ref_name == 'main'
 
@@ -86,9 +118,9 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: "v0.1.1"
-          release_name: "0.1.1"
-          prerelease: false
+          tag_name: "v${{needs.build.outputs.semantic-version}}"
+          release_name: "v${{needs.build.outputs.semantic-version}}"
+          prerelease: ${{ needs.build.outputs.pre-release-label != '' }}
 
       - name: Publish gem
         env:
