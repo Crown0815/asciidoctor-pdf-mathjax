@@ -1,6 +1,6 @@
 Gem::Specification.new do |spec|
   spec.name          = 'asciidoctor-pdf-mathjax'
-  spec.version = '0.1.1'
+  spec.version = '0.0.1'
   spec.authors       = ['Crown0815']
   spec.summary       = 'AsciiDoctor extension to render STEM fields using MathJax SVG'
   spec.description   = 'Converts STEM blocks and inline macros to SVG images using MathJax-node for AsciiDoctor PDF.'
