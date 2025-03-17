@@ -1,8 +1,8 @@
-= Level 0 Header stem:[x_0^2]
-:stem: asciimath
-:pdf-themesdir: {root}/theme
-:imagesdir: {root}/media
 :pdf-theme: test
+include::{root}verification/.attributes.adoc[]
+:stem: asciimath
+
+= Level 0 Header stem:[x_0^2]
 
 [abstract]
 == Abstract Header stem:[x_a^2]

@@ -1,8 +1,7 @@
-= Level 0 Header latexmath:[x_0^2]
-:stem:
-:pdf-themesdir: {root}/theme
-:imagesdir: {root}/media
 :pdf-theme: test
+include::{root}verification/.attributes.adoc[]
+
+= Level 0 Header latexmath:[x_0^2]
 
 [abstract]
 == Abstract Header latexmath:[x_a^2]
