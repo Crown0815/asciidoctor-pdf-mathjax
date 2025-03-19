@@ -165,6 +165,10 @@ class AsciidoctorPDFExtensions < (Asciidoctor::Converter.for 'pdf')
     font_catalog = theme.font_catalog
     font_file = font_catalog[font_family][font_style.to_s]
 
+    if font_file && !font_file.include?(File::SEPARATOR)
+      font_file = File.join(node.document.attributes['pdf-fontsdir'], font_file)
+    end
+
     font = TTFunk::File.open(font_file)
     descender_height = font.horizontal_header.descent.abs
     ascender_height = font.horizontal_header.ascent.abs
