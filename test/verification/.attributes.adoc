@@ -1,0 +1,4 @@
+:stem:
+:pdf-themesdir: {root}/theme
+:imagesdir: {root}/media
+:pdf-fontsdir: {root}/fonts

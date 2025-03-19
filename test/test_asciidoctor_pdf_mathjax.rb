@@ -24,18 +24,26 @@ class TestAsciidoctorPdfMathjax < Minitest::Test
 
   TESTCASES.each do |testcase|
     define_method("test_that_conversion_of_#{testcase}_works") do
-      verify_conversion_of(testcase)
+      verify_conversion_of(testcase, nil)
     end
   end
 
-  def verify_conversion_of(case_name)
-    received_pdf_file = "./test/verification/#{case_name}.received.pdf"
-    verified_pdf_file = "./test/verification/#{case_name}.verified.pdf"
-    diff_file = "./test/verification/#{case_name}.diff.pdf"
+  def test_that_conversion_with_custom_font_theme_works
+    verify_conversion_of('stem_latex', 'custom-font')
+  end
+
+  private
+
+  def verify_conversion_of(case_name, theme)
+    test_case = theme.nil? ? case_name : "#{case_name}-#{theme}"
+    received_pdf_file = "./test/verification/#{test_case}.received.pdf"
+    verified_pdf_file = "./test/verification/#{test_case}.verified.pdf"
+    diff_file = "./test/verification/#{test_case}.diff.pdf"
     adoc_file_path = "./test/verification/#{case_name}.adoc"
     adoc_file = open(adoc_file_path)
     attributes = {
       'root' => "#{Dir.pwd}/test/",
+      'pdf-theme' => theme,
     }
     Asciidoctor.convert adoc_file, to_file: received_pdf_file, safe: :safe, backend: 'pdf', require: 'asciidoctor-pdf-mathjax', attributes: attributes
 

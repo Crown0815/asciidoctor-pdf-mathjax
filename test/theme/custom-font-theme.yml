@@ -1,0 +1,13 @@
+extends: default
+
+font:
+  catalog:
+    merge: true
+    Roboto-Light:
+      normal: roboto-light.ttf
+      italic: roboto-light-italic.ttf
+      bold: roboto-medium.ttf
+      bold_italic: roboto-medium-italic.ttf
+
+base:
+  font-family: Roboto-Light
