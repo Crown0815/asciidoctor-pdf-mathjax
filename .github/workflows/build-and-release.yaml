@@ -97,8 +97,8 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           path: |
-            test/*.diff.pdf
-            test/*.received.pdf
+            test/verification/*.diff.pdf
+            test/verification/*.received.pdf
           name: test-results
 
   release:
