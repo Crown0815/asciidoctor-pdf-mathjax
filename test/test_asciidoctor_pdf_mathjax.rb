@@ -53,7 +53,7 @@ class TestAsciidoctorPdfMathjax < Minitest::Test
     if diff_result
       assert_equal 0, $?&.exitstatus, PDF_COMPARISON_DIFFERENT_MESSAGE
     elsif diff_result.nil?
-      flunk "diff-pdf is not installed"
+      flunk "diff-pdf is missing, install from https://github.com/vslavik/diff-pdf"
     else
       full_diff_path = File.expand_path(diff_file)
       flunk PDF_COMPARISON_DIFFERENT_MESSAGE + " (see file://#{full_diff_path})"
