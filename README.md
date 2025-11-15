@@ -114,6 +114,14 @@ Found a bug or have a suggestion? Please open an issue on the [GitHub Issues pag
 
 ![alignment-logic.png](alignment-logic.excalidraw.png)
 
+## Contributing
+
+To set up your development environment to run the test you need to install the following:
+
+- [Ruby](https://www.ruby-lang.org/) 3.4 or higher
+- [NodeJS](https://nodejs.org/en)
+- [diff-pdf](https://github.com/vslavik/diff-pdf)
+
 ## License
 
 This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
