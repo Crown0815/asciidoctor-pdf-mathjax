@@ -120,9 +120,14 @@ class AsciidoctorPDFExtensions < (Asciidoctor::Converter.for 'pdf')
     js_script = File.join(File.dirname(__FILE__), '../bin/render.js')
     svg_output, error = nil, nil
     format = is_inline ? 'inline-TeX' : 'TeX'
-    Open3.popen3('node', js_script, latex_content, format, POINTS_PER_EX.to_s) do |_, stdout, stderr, wait_thr|
-      svg_output = stdout.read
-      error = stderr.read unless wait_thr.value.success?
+    begin
+      Open3.popen3('node', js_script, latex_content, format, POINTS_PER_EX.to_s) do |_, stdout, stderr, wait_thr|
+        svg_output = stdout.read
+        error = stderr.read unless wait_thr.value.success?
+      end
+    rescue Errno::ENOENT => e
+      error = "Node.js executable 'node' was not found. Please install Node.js and ensure 'node' is available on your PATH. Original error: #{e.message}"
+      svg_output = nil
     end
     [svg_output, error]
   end
