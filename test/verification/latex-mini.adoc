@@ -1,0 +1,14 @@
+:pdf-theme: test
+include::{root}verification/.attributes.adoc[]
+
+= Example for different fonts
+== Block
+
+[latexmath]
+++++
+E = mc^2
+++++
+
+== Inline
+
+latexmath:[E = mc^2]

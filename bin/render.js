@@ -1,9 +1,17 @@
 #!/usr/bin/env node
 
 const mj = require('mathjax-node');
+
+const latex = process.argv[2];
+const format = process.argv[3];
+const pixels_per_ex = parseInt(process.argv[4]);
+const font = process.argv[5];
+
 mj.config({
   MathJax: {
-    // MathJax configuration
+    SVG: {
+      font: font
+    }
   }
 });
 mj.start();
@@ -18,9 +26,6 @@ async function convertToSvg(latex, format, pixels_per_ex) {
   return data.svg;
 }
 
-const latex = process.argv[2];
-const format = process.argv[3];
-const pixels_per_ex = parseInt(process.argv[4]);
 convertToSvg(latex, format, pixels_per_ex).then(svg => {
   console.log(svg);
 }).catch(err => console.error(err));

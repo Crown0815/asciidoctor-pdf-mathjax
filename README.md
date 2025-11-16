@@ -98,6 +98,7 @@ Here’s how to convert an AsciiDoc file with mathematical content to PDF using 
 - Both inline (`stem:[...]` or `latexmath:[...]`) and block (`[stem]`) STEM content are supported.
 - Ensure your system has internet access during the first run, as MathJax may need to fetch resources (subsequent runs
   can work offline if cached).
+- The math font can be customized using the `math-font` attribute. (see [MathJax Font Support](https://docs.mathjax.org/en/v4.0/output/fonts.html) for supported fonts)
 
 ## Issues
 Found a bug or have a suggestion? Please open an issue on the [GitHub Issues page](https://github.com/Crown0815/asciidoctor-pdf-mathjax/issues).
@@ -113,6 +114,14 @@ Found a bug or have a suggestion? Please open an issue on the [GitHub Issues pag
 ## Equation alignment background
 
 ![alignment-logic.png](alignment-logic.excalidraw.png)
+
+## Contributing
+
+To set up your development environment to run the test you need to install the following:
+
+- [Ruby](https://www.ruby-lang.org/) 3.4 or higher
+- [NodeJS](https://nodejs.org/en)
+- [diff-pdf](https://github.com/vslavik/diff-pdf)
 
 ## License
 
