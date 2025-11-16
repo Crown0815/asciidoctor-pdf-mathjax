@@ -48,7 +48,7 @@ class AsciidoctorPDFExtensions < (Asciidoctor::Converter.for 'pdf')
         scaling_factor = @font_size.to_f / svg_default_font_size
         svg_width = svg_width * scaling_factor
 
-        svg_file = Tempfile.new(['stem', '.svg'])
+        svg_file = Tempfile.new(%w[stem .svg])
         begin
           svg_file.write(svg_output)
           svg_file.close
@@ -83,7 +83,7 @@ class AsciidoctorPDFExtensions < (Asciidoctor::Converter.for 'pdf')
       return super
     end
     adjusted_svg, svg_width = adjust_svg_to_match_text(svg_output, node, theme)
-    tmp_svg = Tempfile.new(['stem-', '.svg'])
+    tmp_svg = Tempfile.new(%w[stem- .svg])
     self.class.tempfiles << tmp_svg
     begin
       tmp_svg.write(adjusted_svg)
