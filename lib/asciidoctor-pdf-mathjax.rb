@@ -21,7 +21,7 @@ class AsciidoctorPDFExtensions < (Asciidoctor::Converter.for 'pdf')
     attr_reader :tempfiles
   end
 
-  def convert_stem node
+  def convert_stem(node)
     arrange_block node do |_|
       add_dest_for_block node if node.id
 
@@ -29,9 +29,11 @@ class AsciidoctorPDFExtensions < (Asciidoctor::Converter.for 'pdf')
 
       svg_output, error = stem_to_svg(latex_content, false)
 
+      # noinspection RubyResolve
+      code_padding = @theme.code_padding
       if svg_output.nil? || svg_output.empty?
         logger.warn "Failed to convert STEM to SVG: #{error} (Fallback to code block)"
-        pad_box @theme.code_padding, node do
+        pad_box code_padding, node do
           theme_font :code do
             typeset_formatted_text [{ text: (guard_indentation latex_content), color: @font_color }],
                                    (calc_line_metrics @base_line_height),
@@ -53,7 +55,7 @@ class AsciidoctorPDFExtensions < (Asciidoctor::Converter.for 'pdf')
           svg_file.write(svg_output)
           svg_file.close
 
-          pad_box @theme.code_padding, node do
+          pad_box code_padding, node do
             begin
               image_obj = image svg_file.path, position: :center, width: svg_width, height: nil
               logger.debug "Successfully embedded stem block (as latex) #{latex_content} as SVG image" if image_obj
@@ -71,7 +73,7 @@ class AsciidoctorPDFExtensions < (Asciidoctor::Converter.for 'pdf')
     theme_margin :block, :bottom, (next_enclosed_block node)
   end
 
-  def convert_inline_quoted node
+  def convert_inline_quoted(node)
     latex_content = extract_latex_content(node.text, node.type)
     return super if latex_content.nil?
 
@@ -147,7 +149,7 @@ class AsciidoctorPDFExtensions < (Asciidoctor::Converter.for 'pdf')
       font_style = theme["#{theme_key}_font_style"] || theme['heading_font_style'] || theme['base_font_style'] || FALLBACK_FONT_STYLE
       font_size = theme["#{theme_key}_font_size"] || theme['heading_font_size'] || theme['base_font_size'] || FALLBACK_FONT_SIZE
       font_color = theme["#{theme_key}_font_color"] || theme['heading_font_color'] || theme['base_font_color'] || FALLBACK_FONT_COLOR
-    else
+    elsif node_context
       if node_context.parent.is_a?(Asciidoctor::Section) && node_context.parent.sectname == 'abstract'
         theme_key = :abstract
       else
@@ -159,14 +161,17 @@ class AsciidoctorPDFExtensions < (Asciidoctor::Converter.for 'pdf')
       font_size = nil
       font_color = nil
       converter = node_context.converter
-      converter.theme_font theme_key do
+      converter&.theme_font theme_key do
         font_family = converter.font_family || FALLBACK_FONT_FAMILY
         font_style = converter.font_style || FALLBACK_FONT_STYLE
         font_size = converter.font_size || FALLBACK_FONT_SIZE
         font_color = converter.font_color || FALLBACK_FONT_COLOR
       end
+    else
+      raise "No font context found for node #{node}"
     end
 
+    # noinspection RubyResolve
     font_catalog = theme.font_catalog
     font_file = font_catalog[font_family][font_style.to_s]
 
@@ -175,8 +180,29 @@ class AsciidoctorPDFExtensions < (Asciidoctor::Converter.for 'pdf')
     end
 
     font = TTFunk::File.open(font_file)
+    unless font
+      raise "Failed opening font file: #{font_file}"
+    end
+
     descender_height = font.horizontal_header.descent.abs
     ascender_height = font.horizontal_header.ascent.abs
+    x_height = font.os2.x_height
+
+    unless x_height
+      logger.debug "'OS/2' table not found, falling back to estimating font x-height (ex) from glyph"
+
+      cmap_table = font.cmap.tables.find { |table| table.format == 4 && table.platform_id == 3 && table.encoding_id == 1 || table.encoding_id == 10 }
+      raise 'No suitable Unicode cmap table found' unless cmap_table
+
+      glyph_id = cmap_table.code_map['x'.ord]
+      raise "Glyph for 'x' not found" if glyph_id.nil? || glyph_id == 0
+
+      glyph = font.glyph_outlines.for(glyph_id)
+      raise 'Glyph data not available' unless glyph
+
+      x_height = glyph.y_max - glyph.y_min
+    end
+    logger.debug "Embedding Font: #{font_family} #{font_style}, x-height: #{x_height}, ascender: #{ascender_height}, descender: #{descender_height}"
 
     units_per_em = font.header.units_per_em.to_f
     total_height = (descender_height.to_f + ascender_height.to_f)
@@ -239,7 +265,7 @@ class AsciidoctorPDFExtensions < (Asciidoctor::Converter.for 'pdf')
     [svg_output, svg_width]
   rescue => e
     logger.warn "Failed to adjust SVG baseline: #{e.full_message}"
-    nil # Fallback to original if adjustment fails
+    nil # Fallback to the original if adjustment fails
   end
 
   def find_font_context(node)
