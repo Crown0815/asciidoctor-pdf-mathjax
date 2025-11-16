@@ -7,6 +7,7 @@ require 'asciimath'
 
 POINTS_PER_EX = 6
 MATHJAX_DEFAULT_COLOR_STRING = "currentColor"
+MATHJAX_DEFAULT_FONT_FAMILY = "TeX"
 
 FALLBACK_FONT_SIZE = 12
 FALLBACK_FONT_STYLE = 'normal'
@@ -26,8 +27,9 @@ class AsciidoctorPDFExtensions < (Asciidoctor::Converter.for 'pdf')
       add_dest_for_block node if node.id
 
       latex_content = extract_latex_content(node.content, node.style.to_sym)
+      math_font = node.document.attributes['math-font'] || MATHJAX_DEFAULT_FONT_FAMILY
 
-      svg_output, error = stem_to_svg(latex_content, false)
+      svg_output, error = stem_to_svg(latex_content, false, math_font)
 
       # noinspection RubyResolve
       code_padding = @theme.code_padding
@@ -78,8 +80,9 @@ class AsciidoctorPDFExtensions < (Asciidoctor::Converter.for 'pdf')
     return super if latex_content.nil?
 
     theme = (load_theme node.document)
+    math_font = node.document.attributes['math-font'] || MATHJAX_DEFAULT_FONT_FAMILY
 
-    svg_output, error = stem_to_svg(latex_content, true)
+    svg_output, error = stem_to_svg(latex_content, true, math_font)
     if svg_output.nil? || svg_output.empty?
       logger.warn "Error processing stem: #{error || 'No SVG output'}"
       return super
@@ -91,7 +94,7 @@ class AsciidoctorPDFExtensions < (Asciidoctor::Converter.for 'pdf')
       tmp_svg.write(adjusted_svg)
       tmp_svg.close
 
-      logger.debug "Successfully embedded stem inline #{node.text} as SVG image"
+      logger.debug "Successfully embedded stem inline #{node.text} with font #{math_font} as SVG image"
       quoted_text = "<img src=\"#{tmp_svg.path}\" format=\"svg\" width=\"#{svg_width}\" alt=\"#{node.text}\">"
       node.id ? %(<a id="#{node.id}">#{DummyText}</a>#{quoted_text}) : quoted_text
     rescue => e
@@ -118,12 +121,12 @@ class AsciidoctorPDFExtensions < (Asciidoctor::Converter.for 'pdf')
     svg_output.gsub(MATHJAX_DEFAULT_COLOR_STRING, "##{font_color}")
   end
 
-  def stem_to_svg(latex_content, is_inline)
+  def stem_to_svg(latex_content, is_inline, math_font)
     js_script = File.join(File.dirname(__FILE__), '../bin/render.js')
     svg_output, error = nil, nil
     format = is_inline ? 'inline-TeX' : 'TeX'
     begin
-      Open3.popen3('node', js_script, latex_content, format, POINTS_PER_EX.to_s) do |_, stdout, stderr, wait_thr|
+      Open3.popen3('node', js_script, latex_content, format, POINTS_PER_EX.to_s, math_font) do |_, stdout, stderr, wait_thr|
         svg_output = stdout.read
         error = stderr.read unless wait_thr.value.success?
       end

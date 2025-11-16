@@ -5,7 +5,7 @@ const mj = require('mathjax-node');
 const latex = process.argv[2];
 const format = process.argv[3];
 const pixels_per_ex = parseInt(process.argv[4]);
-const font = process.argv[5] || "TeX";
+const font = process.argv[5];
 
 mj.config({
   MathJax: {
