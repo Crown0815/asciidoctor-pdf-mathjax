@@ -109,7 +109,7 @@ Found a bug or have a suggestion? Please open an issue on the [GitHub Issues pag
   To avoid this, consider using block math expressions.
 - For very high inline math expressions, asciidoctor-pdf will align them to the bottom of the text, which is undesired.
   To avoid this, consider using block math expressions,
-  or [raise an issue in asciiidoctor-pdf](https://github.com/asciidoctor/asciidoctor-pdf/issues).
+  or [raise an issue in asciidoctor-pdf](https://github.com/asciidoctor/asciidoctor-pdf/issues).
 
 ## Equation alignment background
 
