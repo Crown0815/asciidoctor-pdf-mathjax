@@ -245,9 +245,7 @@ class AsciidoctorPDFExtensions < (Asciidoctor::Converter.for 'pdf')
     end
 
     font = TTFunk::File.open(font_file)
-    unless font
-      raise "Failed opening font file: #{font_file}"
-    end
+    raise "Failed opening font file: #{font_file}" unless font
 
     descender_height = font.horizontal_header.descent.abs
     ascender_height = font.horizontal_header.ascent.abs
