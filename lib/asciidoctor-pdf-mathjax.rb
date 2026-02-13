@@ -247,9 +247,17 @@ class AsciidoctorPDFExtensions < (Asciidoctor::Converter.for 'pdf')
     font = TTFunk::File.open(font_file)
     raise "Failed opening font file: #{font_file}" unless font
 
-    descender_height = font.horizontal_header.descent.abs
-    ascender_height = font.horizontal_header.ascent.abs
-    ex_height = font.os2.x_height
+    if font.os2 && font.os2.ascent != 0
+      ascender_height = font.os2.ascent.abs
+      descender_height = font.os2.descent.abs
+      line_gap = font.os2.line_gap
+    else
+      ascender_height = font.horizontal_header.ascent.abs
+      descender_height = font.horizontal_header.descent.abs
+      line_gap = font.horizontal_header.line_gap
+    end
+
+    ex_height = font.os2&.x_height
 
     unless ex_height
       logger.debug "'OS/2' table not found, falling back to estimating font x-height (ex) from glyph"
@@ -265,13 +273,13 @@ class AsciidoctorPDFExtensions < (Asciidoctor::Converter.for 'pdf')
 
       ex_height = glyph.y_max - glyph.y_min
     end
-    logger.debug "Embedding Font: #{font_family} #{font_style}, x-height: #{ex_height}, ascender: #{ascender_height}, descender: #{descender_height}"
+    logger.debug "Embedding Font: #{font_family} #{font_style}, x-height: #{ex_height}, ascender: #{ascender_height}, descender: #{descender_height}, line gap: #{line_gap}"
 
     units_per_em = font.header.units_per_em.to_f
-    total_height = (descender_height.to_f + ascender_height.to_f)
+    total_height = (descender_height.to_f + ascender_height.to_f + line_gap.to_f)
 
     embedding_text_height = total_height / units_per_em * font_size
-    embedding_text_baseline_height = descender_height / units_per_em * font_size
+    embedding_text_baseline_height = (descender_height.to_f + line_gap.to_f) / units_per_em * font_size
 
     FontAttributes.new(font_size, font_color, embedding_text_height, embedding_text_baseline_height)
   end
