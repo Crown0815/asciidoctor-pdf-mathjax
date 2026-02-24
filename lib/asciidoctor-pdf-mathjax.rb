@@ -16,6 +16,7 @@ FALLBACK_FONT_COLOR = '#000000'
 
 class AsciidoctorPDFExtensions < (Asciidoctor::Converter.for 'pdf')
   register_for 'pdf'
+  FontAttributes = Struct.new(:font_size, :font_color, :font_full_height, :font_baseline)
 
   @tempfiles = []
   class << self
@@ -81,13 +82,14 @@ class AsciidoctorPDFExtensions < (Asciidoctor::Converter.for 'pdf')
 
     theme = (load_theme node.document)
     math_font = node.document.attributes['math-font'] || MATHJAX_DEFAULT_FONT_FAMILY
+    font = analyze_embedding_font(node, theme)
 
     svg_output, error = stem_to_svg(latex_content, true, math_font)
     if svg_output.nil? || svg_output.empty?
       logger.warn "Error processing stem: #{error || 'No SVG output'}"
       return super
     end
-    adjusted_svg, svg_width = adjust_svg_to_match_text(svg_output, node, theme)
+    adjusted_svg, svg_width = adjust_svg_to_match_text(svg_output, font)
     tmp_svg = Tempfile.new(%w[stem- .svg])
     self.class.tempfiles << tmp_svg
     begin
@@ -137,7 +139,67 @@ class AsciidoctorPDFExtensions < (Asciidoctor::Converter.for 'pdf')
     [svg_output, error]
   end
 
-  def adjust_svg_to_match_text(svg_content, node, theme)
+  def adjust_svg_to_match_text(svg_content, font)
+
+    svg_doc = REXML::Document.new(svg_content)
+    svg_width = svg_doc.root.attributes['width'].to_f * POINTS_PER_EX || raise("No width found in SVG")
+    svg_height = svg_doc.root.attributes['height'].to_f * POINTS_PER_EX || raise("No height found in SVG")
+    view_box = svg_doc.root.attributes['viewBox']&.split(/\s+/)&.map(&:to_f) || raise("No viewBox found in SVG")
+    svg_inner_offset = view_box[1]
+    svg_inner_height = view_box[3]
+
+    svg_default_font_size = FALLBACK_FONT_SIZE
+
+    # Adjust SVG height and width so that math font matches embedding text
+    scaling_factor = font.font_size.to_f / svg_default_font_size
+    svg_width = svg_width * scaling_factor
+    svg_height = svg_height * scaling_factor
+
+    svg_height_difference = font.font_full_height - svg_height
+    svg_relative_height_difference = font.font_full_height / svg_height
+    embedding_text_relative_baseline_height = font.font_baseline / font.font_full_height
+
+    logger.debug "Original SVG height: #{svg_height.round(2)}, width: #{svg_width.round(2)}, inner height: #{svg_inner_height.round(2)}, inner offset: #{svg_inner_offset.round(2)}"
+    if svg_height_difference < 0
+      svg_relative_portion_extending_embedding_text_below = (1 - svg_relative_height_difference) / 2
+      svg_relative_baseline_height = embedding_text_relative_baseline_height * svg_relative_height_difference
+      svg_inner_relative_offset = svg_relative_baseline_height + svg_relative_portion_extending_embedding_text_below - 1
+
+      svg_inner_offset_new = svg_inner_relative_offset * svg_inner_height
+      svg_inner_height_padding = (svg_inner_offset - svg_inner_offset_new) * 0.25 # 25% padding to handle fractions
+      svg_inner_height_difference = 2 * svg_inner_height_padding
+      svg_inner_height_new = svg_inner_height + svg_inner_height_difference
+      svg_inner_height_relative_difference = svg_inner_height_new / svg_inner_height
+
+      logger.debug("svg_inner_offset = #{svg_inner_offset}, svg_inner_height = #{svg_inner_height}, svg_inner_offset_new = #{svg_inner_offset_new}, svg_inner_height_new = #{svg_inner_height_new}")
+      logger.debug("svg_inner_offset_diff = #{svg_inner_offset - svg_inner_offset_new}, svg_inner_offset_diff_relative = #{(svg_inner_offset - svg_inner_offset_new) / svg_inner_height}")
+
+      svg_height = svg_height * svg_inner_height_relative_difference
+      svg_inner_height = svg_inner_height_new
+      svg_inner_offset = svg_inner_offset_new - svg_inner_height_padding
+    else
+      svg_height = font.font_full_height
+      svg_inner_height = svg_relative_height_difference * svg_inner_height
+      svg_inner_offset = (embedding_text_relative_baseline_height - 1) * svg_inner_height
+    end
+
+    view_box[1] = svg_inner_offset
+    view_box[3] = svg_inner_height
+    svg_doc.root.attributes['viewBox'] = view_box.join(' ')
+    svg_doc.root.attributes['height'] = "#{svg_height / POINTS_PER_EX}ex"
+    svg_doc.root.attributes['width'] = "#{svg_width / POINTS_PER_EX}ex"
+    svg_doc.root.attributes.delete('style')
+
+    logger.debug "Adjusted SVG height: #{svg_height.round(2)}, width: #{svg_width.round(2)}, inner height: #{svg_inner_height.round(2)}, inner offset: #{svg_inner_offset.round(2)}"
+    svg_output = adjust_svg_color(svg_doc.to_s, font.font_color)
+
+    [svg_output, svg_width]
+  rescue => e
+    logger.warn "Failed to adjust SVG baseline: #{e.full_message}"
+    nil # Fallback to the original if adjustment fails
+  end
+
+  def analyze_embedding_font(node, theme)
     node_context = find_font_context(node)
     logger.debug "Found font context #{node_context} for node #{node}"
 
@@ -183,15 +245,21 @@ class AsciidoctorPDFExtensions < (Asciidoctor::Converter.for 'pdf')
     end
 
     font = TTFunk::File.open(font_file)
-    unless font
-      raise "Failed opening font file: #{font_file}"
+    raise "Failed opening font file: #{font_file}" unless font
+
+    if font.os2 && font.os2.ascent != 0
+      ascender_height = font.os2.ascent.abs
+      descender_height = font.os2.descent.abs
+      line_gap = font.os2.line_gap
+    else
+      ascender_height = font.horizontal_header.ascent.abs
+      descender_height = font.horizontal_header.descent.abs
+      line_gap = font.horizontal_header.line_gap
     end
 
-    descender_height = font.horizontal_header.descent.abs
-    ascender_height = font.horizontal_header.ascent.abs
-    x_height = font.os2.x_height
+    ex_height = font.os2&.x_height
 
-    unless x_height
+    unless ex_height
       logger.debug "'OS/2' table not found, falling back to estimating font x-height (ex) from glyph"
 
       cmap_table = font.cmap.tables.find { |table| table.format == 4 && table.platform_id == 3 && table.encoding_id == 1 || table.encoding_id == 10 }
@@ -203,72 +271,17 @@ class AsciidoctorPDFExtensions < (Asciidoctor::Converter.for 'pdf')
       glyph = font.glyph_outlines.for(glyph_id)
       raise 'Glyph data not available' unless glyph
 
-      x_height = glyph.y_max - glyph.y_min
+      ex_height = glyph.y_max - glyph.y_min
     end
-    logger.debug "Embedding Font: #{font_family} #{font_style}, x-height: #{x_height}, ascender: #{ascender_height}, descender: #{descender_height}"
+    logger.debug "Embedding Font: #{font_family} #{font_style}, x-height: #{ex_height}, ascender: #{ascender_height}, descender: #{descender_height}, line gap: #{line_gap}"
 
     units_per_em = font.header.units_per_em.to_f
-    total_height = (descender_height.to_f + ascender_height.to_f)
+    total_height = (descender_height.to_f + ascender_height.to_f + line_gap.to_f)
 
     embedding_text_height = total_height / units_per_em * font_size
-    embedding_text_baseline_height = descender_height / units_per_em * font_size
+    embedding_text_baseline_height = (descender_height.to_f + line_gap.to_f) / units_per_em * font_size
 
-    svg_doc = REXML::Document.new(svg_content)
-    svg_width = svg_doc.root.attributes['width'].to_f * POINTS_PER_EX || raise("No width found in SVG")
-    svg_height = svg_doc.root.attributes['height'].to_f * POINTS_PER_EX || raise("No height found in SVG")
-    view_box = svg_doc.root.attributes['viewBox']&.split(/\s+/)&.map(&:to_f) || raise("No viewBox found in SVG")
-    svg_inner_offset = view_box[1]
-    svg_inner_height = view_box[3]
-
-    svg_default_font_size = FALLBACK_FONT_SIZE
-
-    # Adjust SVG height and width so that math font matches embedding text
-    scaling_factor = font_size.to_f / svg_default_font_size
-    svg_width = svg_width * scaling_factor
-    svg_height = svg_height * scaling_factor
-
-    svg_height_difference = embedding_text_height - svg_height
-    svg_relative_height_difference = embedding_text_height / svg_height
-    embedding_text_relative_baseline_height = embedding_text_baseline_height / embedding_text_height
-
-    logger.debug "Original SVG height: #{svg_height.round(2)}, width: #{svg_width.round(2)}, inner height: #{svg_inner_height.round(2)}, inner offset: #{svg_inner_offset.round(2)}"
-    if svg_height_difference < 0
-      svg_relative_portion_extending_embedding_text_below = (1 - svg_relative_height_difference) / 2
-      svg_relative_baseline_height = embedding_text_relative_baseline_height * svg_relative_height_difference
-      svg_inner_relative_offset = svg_relative_baseline_height + svg_relative_portion_extending_embedding_text_below - 1
-
-      svg_inner_offset_new = svg_inner_relative_offset * svg_inner_height
-      svg_inner_height_padding = (svg_inner_offset - svg_inner_offset_new) * 0.25 # 25% padding to handle fractions
-      svg_inner_height_difference = 2 * svg_inner_height_padding
-      svg_inner_height_new = svg_inner_height + svg_inner_height_difference
-      svg_inner_height_relative_difference = svg_inner_height_new / svg_inner_height
-
-      logger.debug("svg_inner_offset = #{svg_inner_offset}, svg_inner_height = #{svg_inner_height}, svg_inner_offset_new = #{svg_inner_offset_new}, svg_inner_height_new = #{svg_inner_height_new}")
-      logger.debug("svg_inner_offset_diff = #{svg_inner_offset - svg_inner_offset_new}, svg_inner_offset_diff_relative = #{(svg_inner_offset - svg_inner_offset_new) / svg_inner_height}")
-
-      svg_height = svg_height * svg_inner_height_relative_difference
-      svg_inner_height = svg_inner_height_new
-      svg_inner_offset = svg_inner_offset_new - svg_inner_height_padding
-    else
-      svg_height = embedding_text_height
-      svg_inner_height = svg_relative_height_difference * svg_inner_height
-      svg_inner_offset = (embedding_text_relative_baseline_height - 1) * svg_inner_height
-    end
-
-    view_box[1] = svg_inner_offset
-    view_box[3] = svg_inner_height
-    svg_doc.root.attributes['viewBox'] = view_box.join(' ')
-    svg_doc.root.attributes['height'] = "#{svg_height / POINTS_PER_EX}ex"
-    svg_doc.root.attributes['width'] = "#{svg_width / POINTS_PER_EX}ex"
-    svg_doc.root.attributes.delete('style')
-
-    logger.debug "Adjusted SVG height: #{svg_height.round(2)}, width: #{svg_width.round(2)}, inner height: #{svg_inner_height.round(2)}, inner offset: #{svg_inner_offset.round(2)}"
-    svg_output = adjust_svg_color(svg_doc.to_s, font_color)
-
-    [svg_output, svg_width]
-  rescue => e
-    logger.warn "Failed to adjust SVG baseline: #{e.full_message}"
-    nil # Fallback to the original if adjustment fails
+    FontAttributes.new(font_size, font_color, embedding_text_height, embedding_text_baseline_height)
   end
 
   def find_font_context(node)
