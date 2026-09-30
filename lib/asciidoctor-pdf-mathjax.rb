@@ -97,7 +97,7 @@ class AsciidoctorPDFExtensions < (Asciidoctor::Converter.for 'pdf')
       tmp_svg.close
 
       logger.debug "Successfully embedded stem inline #{node.text} with font #{math_font} as SVG image"
-      quoted_text = "<img src=\"#{tmp_svg.path}\" format=\"svg\" width=\"#{svg_width}\" alt=\"#{node.text}\">"
+      quoted_text = "<img src=\"#{tmp_svg.path}\" format=\"svg\" width=\"#{svg_width}\" alt=\"#{node.text.gsub('"', '&quot;')}\">"
       node.id ? %(<a id="#{node.id}">#{DummyText}</a>#{quoted_text}) : quoted_text
     rescue => e
       logger.warn "Failed to process SVG: #{e.message}"

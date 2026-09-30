@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'minitest/autorun'
+require 'tmpdir'
 require 'asciidoctor'
 require 'asciidoctor-pdf'
 require_relative '../lib/asciidoctor-pdf-mathjax'
@@ -39,6 +40,17 @@ class TestAsciidoctorPdfMathjax < Minitest::Test
     define_method("test_that_conversion_of_latex_to_math_font_#{testcase}_works") do
       verify_conversion_of('latex-mini', {'math-font' => testcase})
     end
+  end
+
+  def test_that_quotes_in_inline_asciimath_do_not_break_the_paragraph
+    logger = Asciidoctor::MemoryLogger.new
+    Asciidoctor::LoggerManager.logger = logger
+    Dir.mktmpdir do |dir|
+      Asciidoctor.convert %(:stem: asciimath\n\nA unit stem:[10 " N"] and an index stem:[x_"ref"] in one sentence.),
+                          base_dir: dir, to_file: File.join(dir, 'quotes.pdf'), safe: :safe, backend: 'pdf'
+    end
+    parse_errors = logger.messages.select { |entry| entry[:message].to_s.include? 'failed to parse formatted text' }
+    assert_empty parse_errors, 'A quote inside an inline formula broke the paragraph'
   end
 
   private
