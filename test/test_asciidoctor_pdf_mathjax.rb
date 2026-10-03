@@ -45,10 +45,16 @@ class TestAsciidoctorPdfMathjax < Minitest::Test
   def test_that_quotes_in_inline_asciimath_do_not_break_the_paragraph
     logger = Asciidoctor::MemoryLogger.new
     Asciidoctor::LoggerManager.logger = logger
+    input = <<~'--EOF--'
+      :stem: asciimath
+
+      A unit stem:[10 " N"] and an index stem:[x_"ref"] in one sentence.
+      --EOF--
+
     Dir.mktmpdir do |dir|
-      Asciidoctor.convert %(:stem: asciimath\n\nA unit stem:[10 " N"] and an index stem:[x_"ref"] in one sentence.),
-                          base_dir: dir, to_file: File.join(dir, 'quotes.pdf'), safe: :safe, backend: 'pdf'
+      Asciidoctor.convert input, base_dir: dir, to_file: File.join(dir, 'quotes.pdf'), safe: :safe, backend: 'pdf'
     end
+    
     parse_errors = logger.messages.select { |entry| entry[:message].to_s.include? 'failed to parse formatted text' }
     assert_empty parse_errors, 'A quote inside an inline formula broke the paragraph'
   end
