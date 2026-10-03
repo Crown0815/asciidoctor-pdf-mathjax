@@ -1,5 +1,6 @@
 require 'asciidoctor-pdf' unless Asciidoctor::Converter.for 'pdf'
 require 'open3'
+require 'json'
 require 'tempfile'
 require 'rexml/document'
 require 'ttfunk'
@@ -124,19 +125,62 @@ class AsciidoctorPDFExtensions < (Asciidoctor::Converter.for 'pdf')
   end
 
   def stem_to_svg(latex_content, is_inline, math_font)
-    js_script = File.join(File.dirname(__FILE__), '../bin/render.js')
-    svg_output, error = nil, nil
     format = is_inline ? 'inline-TeX' : 'TeX'
-    begin
-      Open3.popen3('node', js_script, latex_content, format, POINTS_PER_EX.to_s, math_font) do |_, stdout, stderr, wait_thr|
-        svg_output = stdout.read
-        error = stderr.read unless wait_thr.value.success?
-      end
-    rescue Errno::ENOENT => e
-      error = "Node.js executable 'node' was not found. Please install Node.js and ensure 'node' is available on your PATH. Original error: #{e.message}"
-      svg_output = nil
+    MathJaxServer.for(math_font).render(latex_content, format)
+  end
+
+  # One long-running render.js process per math font. Starting node and MathJax takes
+  # seconds, rendering a formula takes milliseconds, so a document pays the start once.
+  class MathJaxServer
+    JS_SCRIPT = File.join(File.dirname(__FILE__), '../bin/render.js')
+
+    @servers = {}
+
+    def self.for(math_font)
+      @servers[math_font] ||= new(math_font)
     end
-    [svg_output, error]
+
+    def initialize(math_font)
+      @math_font = math_font
+    end
+
+    def render(latex_content, format)
+      start unless @stdin
+      @stdin.puts JSON.generate('math' => latex_content, 'format' => format, 'ex' => POINTS_PER_EX)
+      @stdin.flush
+      answer = read_answer
+      [answer['svg'], answer['error']]
+    rescue Errno::ENOENT => e
+      [nil, "Node.js executable 'node' was not found. Please install Node.js and ensure 'node' is available on your PATH. Original error: #{e.message}"]
+    rescue IOError, SystemCallError => e
+      stop
+      [nil, "MathJax process for font #{@math_font} failed: #{e.message}"]
+    end
+
+    private
+
+    def start
+      @stdin, @stdout, @wait_thr = Open3.popen2('node', JS_SCRIPT, '--server', @math_font)
+      at_exit { stop }
+    end
+
+    # Skips anything else a dependency may print to stdout.
+    def read_answer
+      while (line = @stdout.gets)
+        answer = JSON.parse(line) rescue nil
+        return answer if answer.is_a?(Hash) && (answer.key?('svg') || answer.key?('error'))
+      end
+      raise IOError, 'render.js ended without an answer'
+    end
+
+    def stop
+      return unless @stdin
+      @stdin.close unless @stdin.closed?
+      Process.kill('KILL', @wait_thr.pid) unless @wait_thr.join(5)
+      @stdin = @stdout = @wait_thr = nil
+    rescue SystemCallError
+      @stdin = @stdout = @wait_thr = nil
+    end
   end
 
   def adjust_svg_to_match_text(svg_content, font)
