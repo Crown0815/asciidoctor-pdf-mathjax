@@ -6,6 +6,7 @@
 ![GitHub Issues](https://img.shields.io/github/issues/Crown0815/asciidoctor-pdf-mathjax)
 ![GitHub Release](https://img.shields.io/github/v/release/Crown0815/asciidoctor-pdf-mathjax)
 
+no change
 An extension for [Asciidoctor PDF](https://github.com/asciidoctor/asciidoctor-pdf) that
 integrates [MathJax](https://www.mathjax.org/) to render mathematical expressions in PDF output.
 
