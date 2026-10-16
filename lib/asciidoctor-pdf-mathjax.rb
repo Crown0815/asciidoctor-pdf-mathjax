@@ -199,32 +199,33 @@ class AsciidoctorPDFExtensions < (Asciidoctor::Converter.for 'pdf')
     svg_width = svg_width * scaling_factor
     svg_height = svg_height * scaling_factor
 
-    svg_height_difference = font.font_full_height - svg_height
-    svg_relative_height_difference = font.font_full_height / svg_height
-    embedding_text_relative_baseline_height = font.font_baseline / font.font_full_height
+    # Points per viewBox unit. Held constant so the glyphs keep the size MathJax produced.
+    pt_per_unit = svg_height / svg_inner_height
+    orig_top = svg_inner_offset
+    orig_bottom = svg_inner_offset + svg_inner_height
+
+    # Line-sized window with the math baseline (y = 0) on the text baseline.
+    # Asciidoctor centers an inline image in the line when it is at most 1.5 line
+    # heights tall, and bottom-aligns it otherwise. A window exactly the line height
+    # crops any ink past the font ascender or descender (subscripts, denominators).
+    line_units = font.font_full_height / pt_per_unit
+    line_bottom = font.font_baseline / pt_per_unit
+    line_top = line_bottom - line_units
+    overflow_above = [line_top - orig_top, 0].max
+    overflow_below = [orig_bottom - line_bottom, 0].max
+    # Pad both sides equally so centering still leaves the baseline on the text baseline.
+    extra = [overflow_above, overflow_below].max
 
     logger.debug "Original SVG height: #{svg_height.round(2)}, width: #{svg_width.round(2)}, inner height: #{svg_inner_height.round(2)}, inner offset: #{svg_inner_offset.round(2)}"
-    if svg_height_difference < 0
-      svg_relative_portion_extending_embedding_text_below = (1 - svg_relative_height_difference) / 2
-      svg_relative_baseline_height = embedding_text_relative_baseline_height * svg_relative_height_difference
-      svg_inner_relative_offset = svg_relative_baseline_height + svg_relative_portion_extending_embedding_text_below - 1
-
-      svg_inner_offset_new = svg_inner_relative_offset * svg_inner_height
-      svg_inner_height_padding = (svg_inner_offset - svg_inner_offset_new) * 0.25 # 25% padding to handle fractions
-      svg_inner_height_difference = 2 * svg_inner_height_padding
-      svg_inner_height_new = svg_inner_height + svg_inner_height_difference
-      svg_inner_height_relative_difference = svg_inner_height_new / svg_inner_height
-
-      logger.debug("svg_inner_offset = #{svg_inner_offset}, svg_inner_height = #{svg_inner_height}, svg_inner_offset_new = #{svg_inner_offset_new}, svg_inner_height_new = #{svg_inner_height_new}")
-      logger.debug("svg_inner_offset_diff = #{svg_inner_offset - svg_inner_offset_new}, svg_inner_offset_diff_relative = #{(svg_inner_offset - svg_inner_offset_new) / svg_inner_height}")
-
-      svg_height = svg_height * svg_inner_height_relative_difference
-      svg_inner_height = svg_inner_height_new
-      svg_inner_offset = svg_inner_offset_new - svg_inner_height_padding
+    fitted_height = (line_units + 2 * extra) * pt_per_unit
+    if fitted_height <= font.font_full_height * 1.5
+      svg_inner_offset = line_top - extra
+      svg_inner_height = line_units + 2 * extra
+      svg_height = fitted_height
     else
-      svg_height = font.font_full_height
-      svg_inner_height = svg_relative_height_difference * svg_inner_height
-      svg_inner_offset = (embedding_text_relative_baseline_height - 1) * svg_inner_height
+      svg_inner_offset = orig_top
+      svg_inner_height = orig_bottom - orig_top
+      svg_height = svg_inner_height * pt_per_unit
     end
 
     view_box[1] = svg_inner_offset

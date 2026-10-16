@@ -30,11 +30,14 @@ formatted equations in the resulting PDF.
 - [Ruby](https://www.ruby-lang.org/) 2.7 or higher
 - [Asciidoctor](https://asciidoctor.org/) and [Asciidoctor PDF](https://github.com/asciidoctor/asciidoctor-pdf) ([installation instructions](https://github.com/asciidoctor/asciidoctor-pdf?tab=readme-ov-file#prerequisites))
 - [NodeJS](https://nodejs.org/en)
-- [MathJax Node](https://github.com/mathjax/MathJax-node) (required for PDF generation with LaTeX).
+- [MathJax](https://www.mathjax.org/) 4 (required for PDF generation with LaTeX).
   Install it globally with
   ```sh
-  npm install -g mathjax-node
+  npm install -g @mathjax/src@4 @mathjax/mathjax-tex-font@4
   ```
+  The default math font is `mathjax-tex`. Install another font the same way when you select it
+  with the `math-font` attribute, for example `npm install -g @mathjax/mathjax-stix2-font@4`.
+  `Neo-Euler` is a font extension: `npm install -g @mathjax/mathjax-euler-font-extension@4`.
 
 A good starting point is using the [Asciidoctor Docker Container](https://github.com/asciidoctor/docker-asciidoctor), which comes with most dependencies pre-installed.
 You can find an example of a docker container configuration for Asciidoctor PDF MathJax in [this Dockerfile](test/Dockerfile).
@@ -96,9 +99,11 @@ Here’s how to convert an AsciiDoc file with mathematical content to PDF using 
 
 - The `:stem:` attribute must be set in the document header or via the `-a stem` flag to enable STEM processing.
 - Both inline (`stem:[...]` or `latexmath:[...]`) and block (`[stem]`) STEM content are supported.
-- Ensure your system has internet access during the first run, as MathJax may need to fetch resources (subsequent runs
-  can work offline if cached).
-- The math font can be customized using the `math-font` attribute. (see [MathJax Font Support](https://docs.mathjax.org/en/v4.0/output/fonts.html) for supported fonts)
+- MathJax and its fonts are loaded from the local npm install, so rendering works offline after that install.
+- The math font can be customized using the `math-font` attribute. Names from
+  [MathJax Font Support](https://docs.mathjax.org/en/v4.0/output/fonts.html) are accepted, as are the
+  previous MathJax 2 names (`TeX`, `STIX-Web`, `Asana-Math`, `Neo-Euler`, `Gyre-Pagella`, `Gyre-Termes`,
+  `Latin-Modern`).
 
 ## Issues
 Found a bug or have a suggestion? Please open an issue on the [GitHub Issues page](https://github.com/Crown0815/asciidoctor-pdf-mathjax/issues).
