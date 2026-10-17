@@ -9,15 +9,33 @@ require_relative '../lib/asciidoctor-pdf-mathjax'
 Minitest::Test = MiniTest::Unit::TestCase unless defined? Minitest::Test
 
 class TestAsciidoctorPdfMathjax < Minitest::Test
+  # package.json is gitignored. The suite installs the MathJax 4 packages the renderer requires.
+  # Neo-Euler is a font extension in MathJax 4; the other entries are the fonts the examples select.
+  MATHJAX_PACKAGES = %w[
+    @mathjax/src@4.1.3
+    @mathjax/mathjax-tex-font@4.1.3
+    @mathjax/mathjax-stix2-font@4.1.3
+    @mathjax/mathjax-asana-font@4.1.3
+    @mathjax/mathjax-modern-font@4.1.3
+    @mathjax/mathjax-pagella-font@4.1.3
+    @mathjax/mathjax-termes-font@4.1.3
+    @mathjax/mathjax-euler-font-extension@4.1.3
+  ].join(' ')
+
+  def self.ensure_mathjax
+    return if @mathjax_ready
+
+    unless system("npm install --silent --no-fund --no-audit --no-save #{MATHJAX_PACKAGES}")
+      raise 'Failed to install MathJax 4 packages'
+    end
+    @mathjax_ready = true
+  end
+
   def setup
-    system("npm install --silent mathjax-node")
+    self.class.ensure_mathjax
 
     Asciidoctor::LoggerManager.logger = Logger.new(STDOUT)
     Asciidoctor::LoggerManager.logger.level = Logger::DEBUG
-  end
-
-  def teardown
-    system("npm remove --silent mathjax-node")
   end
 
   PDF_COMPARISON_DIFFERENT_MESSAGE = 'PDF files are different'

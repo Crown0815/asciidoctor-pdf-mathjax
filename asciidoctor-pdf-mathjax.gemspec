@@ -3,7 +3,7 @@ Gem::Specification.new do |spec|
   spec.version = '0.0.1'
   spec.authors       = ['Crown0815']
   spec.summary       = 'AsciiDoctor extension to render STEM fields using MathJax SVG'
-  spec.description   = 'Converts STEM blocks and inline macros to SVG images using MathJax-node for AsciiDoctor PDF.'
+  spec.description   = 'Converts STEM blocks and inline macros to SVG images using MathJax for AsciiDoctor PDF.'
   spec.homepage      = 'https://github.com/Crown0815/asciidoctor-pdf-mathjax'
   spec.license       = 'MIT'
   spec.required_ruby_version = '>= 2.7'
@@ -24,9 +24,9 @@ Gem::Specification.new do |spec|
 
   spec.post_install_message = <<~MSG
     Thank you for installing #{spec.name}!
-    Note: This gem requires MathJax-Node for full functionality (e.g., LaTeX rendering).
+    Note: This gem requires MathJax 4 for full functionality (e.g., LaTeX rendering).
     If you haven't installed it, run:
-      npm install -g mathjax-node
-    See the README for details.
+      npm install -g @mathjax/src@4 @mathjax/mathjax-tex-font@4
+    See the README for details and for the other math fonts.
   MSG
 end
