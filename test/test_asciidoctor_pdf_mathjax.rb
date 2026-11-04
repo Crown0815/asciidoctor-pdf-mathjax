@@ -77,6 +77,27 @@ class TestAsciidoctorPdfMathjax < Minitest::Test
     assert_empty parse_errors, 'A quote inside an inline formula broke the paragraph'
   end
 
+  def test_that_a_font_path_relative_to_the_theme_directory_is_found
+    logger = Asciidoctor::MemoryLogger.new
+    logger.level = Logger::DEBUG
+    Asciidoctor::LoggerManager.logger = logger
+    input = <<~'--EOF--'
+      :stem: asciimath
+
+      A formula stem:[x^2] in a sentence.
+      --EOF--
+
+    # asciidoctor-pdf resolves ../fonts/roboto-light.ttf against the theme directory, not
+    # against the working directory, which is the repository root here
+    Dir.mktmpdir do |dir|
+      Asciidoctor.convert input, base_dir: dir, to_file: File.join(dir, 'relative-font.pdf'), safe: :safe, backend: 'pdf',
+                          attributes: { 'pdf-theme' => 'relative-font', 'pdf-themesdir' => File.join(__dir__, 'theme') }
+    end
+
+    embedded = logger.messages.select { |entry| entry[:message].to_s.include? 'Successfully embedded stem inline' }
+    refute_empty embedded, 'The inline formula was not embedded as SVG'
+  end
+
   private
 
   def verify_conversion_of(case_name, extra_attributes = {})
