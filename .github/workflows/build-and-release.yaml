@@ -20,16 +20,11 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Install GitVersion
-        uses: gittools/actions/gitversion/setup@v3.1.11
-        with:
-          versionSpec: '6.0.x'
-
       - name: Determine Version
+        uses: crown0815/git-versioner@v0.20.1
         id: determine-version
-        uses: gittools/actions/gitversion/execute@v3.1.11
         with:
-          useConfigFile: true
+          as-release: ${{ github.event_name == 'push' && github.ref_name == 'main' }}
 
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
@@ -105,7 +100,7 @@ jobs:
     name: Release Gem
     needs: [ build, test ]
     runs-on: ubuntu-latest
-    if: github.event_name == 'push' && github.ref_name == 'main'
+    if: ${{ needs.build.outputs.pre-release-label == '' }}
 
     steps:
       - name: Download artifact
