@@ -1,0 +1,25 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended"],
+  "baseBranchPatterns": ["main"],
+  "dependencyDashboardApproval": false,
+  "prCreation": "immediate",
+  "labels": ["dependencies"],
+  "packageRules": [
+    {
+      "matchManagers": ["bundler"],
+      "groupName": "ruby dependencies",
+      "commitMessagePrefix": "build(ruby): "
+    },
+    {
+      "matchManagers": ["github-actions"],
+      "groupName": "github actions",
+      "commitMessagePrefix": "ci(deps): "
+    },
+    {
+      "matchFileNames": ["docs/**"],
+      "groupName": "documentation dependencies",
+      "commitMessagePrefix": "docs(deps): "
+    }
+  ]
+}
