@@ -72,7 +72,7 @@ class TestAsciidoctorPdfMathjax < Minitest::Test
     Dir.mktmpdir do |dir|
       Asciidoctor.convert input, base_dir: dir, to_file: File.join(dir, 'quotes.pdf'), safe: :safe, backend: 'pdf'
     end
-    
+
     parse_errors = logger.messages.select { |entry| entry[:message].to_s.include? 'failed to parse formatted text' }
     assert_empty parse_errors, 'A quote inside an inline formula broke the paragraph'
   end
@@ -115,8 +115,7 @@ class TestAsciidoctorPdfMathjax < Minitest::Test
     Asciidoctor.convert adoc_file, to_file: received_pdf_file, safe: :safe, backend: 'pdf', require: 'asciidoctor-pdf-mathjax', attributes: attributes
 
     assert File.exist?(received_pdf_file), 'PDF file was not created'
-    diff_command = "diff-pdf --output-diff=#{diff_file} #{verified_pdf_file} #{received_pdf_file}"
-    diff_result = system(diff_command)
+    diff_result = system('diff-pdf', "--output-diff=#{diff_file}", verified_pdf_file, received_pdf_file)
     if diff_result
       assert_equal 0, $?&.exitstatus, PDF_COMPARISON_DIFFERENT_MESSAGE
     elsif diff_result.nil?
@@ -128,8 +127,12 @@ class TestAsciidoctorPdfMathjax < Minitest::Test
   ensure
     adoc_file&.close
     if diff_result
-      File.delete(received_pdf_file)
-      File.delete(diff_file)
+      if File.exist?(received_pdf_file)
+        File.delete(received_pdf_file)
+      end
+      if File.exist?(diff_file)
+        File.delete(diff_file)
+      end
     end
   end
 end
