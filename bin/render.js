@@ -87,6 +87,7 @@ function convertToSvg(latex, format, pixelsPerEx) {
 
 MathJax.init({
   loader: {
+    require: require,
     load: ['input/tex', 'output/svg'],
     // Font packages can report an older component version than MathJax itself.
     versionWarnings: false,
