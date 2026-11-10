@@ -126,7 +126,8 @@ To set up your development environment to run the test you need to install the f
 
 - [Ruby](https://www.ruby-lang.org/) 3.4 or higher
 - [NodeJS](https://nodejs.org/en)
-- [diff-pdf](https://github.com/vslavik/diff-pdf)
+
+The acceptance tests compare each generated PDF with its `*.verified.pdf` baseline. The comparison uses [pdf-reader](https://github.com/yob/pdf-reader) and checks page content, embedded font programs, and XObjects. Document IDs and timestamps are ignored, and no native PDF tool is required.
 
 ## License
 
