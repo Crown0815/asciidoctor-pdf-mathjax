@@ -17,7 +17,6 @@ Gem::Specification.new do |spec|
   spec.add_dependency 'nokogiri', '~> 1.18', '>= 1.18.3'
   spec.add_dependency 'asciimath', '~> 2.0', '>= 2.0.6'
   spec.add_dependency 'bigdecimal', '~> 3.0' if RUBY_VERSION > '3.3'
-  spec.add_development_dependency 'bundler', '~> 2.0'
   spec.add_development_dependency 'rake', '~> 13.0'
   spec.add_development_dependency 'minitest', '~> 5.0'
   spec.add_development_dependency 'logger', '~> 1.4'
