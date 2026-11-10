@@ -46,8 +46,12 @@ jobs:
           name: gem
 
   test:
-    name: Test Gem
-    runs-on: ubuntu-latest
+    name: Test Gem (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -58,7 +62,8 @@ jobs:
       - name: Install dependencies
         run: bundle install
 
-      - name: Install Diff_PDF
+      - name: Install Diff_PDF (Linux)
+        if: runner.os == 'Linux'
         run: |
           # Install dependencies
           sudo apt-get update
@@ -77,7 +82,16 @@ jobs:
             && make \
             && sudo make install
 
+      - name: Install Diff_PDF (macOS)
+        if: runner.os == 'macOS'
+        run: brew install diff-pdf
+
+      - name: Install Diff_PDF (Windows)
+        if: runner.os == 'Windows'
+        run: choco install diff-pdf -y --no-progress
+
       - name: Install and Start Xvfb (artificial display server)
+        if: runner.os == 'Linux'
         run: |
           sudo apt-get install xvfb
           Xvfb :99 -screen 0 1024x768x24 &      # Start Xvfb in the background
@@ -85,7 +99,7 @@ jobs:
           echo "NO_AT_BRIDGE=1" >> $GITHUB_ENV  # Disable AT-SPI
 
       - name: Run tests
-        run: ruby test/test_*.rb
+        run: ruby test/test_asciidoctor_pdf_mathjax.rb
 
       - name: Upload test artifacts (if failure)
         if: failure()
@@ -94,7 +108,7 @@ jobs:
           path: |
             test/verification/*.diff.pdf
             test/verification/*.received.pdf
-          name: test-results
+          name: test-results-${{ matrix.os }}
 
   release:
     name: Release Gem
