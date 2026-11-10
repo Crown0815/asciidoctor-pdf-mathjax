@@ -62,51 +62,65 @@ jobs:
       - name: Install dependencies
         run: bundle install
 
-      - name: Install Diff_PDF (Linux)
-        if: runner.os == 'Linux'
-        run: |
-          echo "---Install dependencies---"
-          sudo apt-get update
-          sudo apt-get install make automake g++
-          sudo apt-get install libpoppler-glib-dev poppler-utils libwxgtk3.2-dev
-
-          echo "---Download diff-pdf code---"
-          wget https://github.com/vslavik/diff-pdf/archive/refs/tags/v0.5.2.tar.gz -O diff-pdf-0.5.2.tar.gz \
-            && tar -xzf diff-pdf-0.5.2.tar.gz \
-            && rm diff-pdf-0.5.2.tar.gz
-
-          echo "---Build and install diff-pdf---"
-          cd diff-pdf-0.5.2 \
-            && ./bootstrap \
-            && ./configure \
-            && make \
-            && sudo make install
-
-          echo "---Install and Start Xvfb (artificial display server)---"
-          sudo apt-get install xvfb
-          Xvfb :99 -screen 0 1024x768x24 &      # Start Xvfb in the background
-          echo "DISPLAY=:99" >> $GITHUB_ENV     # Set DISPLAY for subsequent steps
-          echo "NO_AT_BRIDGE=1" >> $GITHUB_ENV  # Disable AT-SPI
-
-      - name: Install Diff_PDF (macOS)
-        if: runner.os == 'macOS'
-        run: brew install diff-pdf
-
-      - name: Install Diff_PDF (Windows)
-        if: runner.os == 'Windows'
-        run: choco install diff-pdf -y --no-progress
-
       - name: Run tests
-        run: ruby test/test_asciidoctor_pdf_mathjax.rb
+        run: ruby test/test_*.rb
 
       - name: Upload test artifacts (if failure)
         if: failure()
         uses: actions/upload-artifact@v4
         with:
           path: |
-            test/verification/*.diff.pdf
             test/verification/*.received.pdf
+            test/verification/*.verified.pdf
           name: test-results-${{ matrix.os }}
+          if-no-files-found: error
+
+  pdf-diff:
+    name: Generate PDF diffs (${{ matrix.os }})
+    needs: test
+    runs-on: macos-latest
+    if: ${{ always() && needs.test.result == 'failure' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    steps:
+      - name: Download test PDFs
+        id: download
+        uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          name: test-results-${{ matrix.os }}
+          path: received
+
+      - name: Install diff-pdf
+        if: steps.download.outcome == 'success'
+        run: brew install diff-pdf
+
+      - name: Generate diffs
+        if: steps.download.outcome == 'success'
+        run: |
+          shopt -s nullglob
+          for received_pdf in received/*.received.pdf; do
+            filename="${received_pdf##*/}"
+            testcase="${filename%.received.pdf}"
+            verified_pdf="received/$testcase.verified.pdf"
+
+            diff_pdf="received/$testcase.diff.pdf"
+            diff-pdf --output-diff="$diff_pdf" "$verified_pdf" "$received_pdf" || status=$?
+            if [[ "${status:-0}" -gt 1 ]]; then
+              echo "::warning::diff-pdf failed for $received_pdf with exit code $status"
+            fi
+            unset status
+          done
+
+      - name: Extend test results
+        if: steps.download.outcome == 'success'
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-${{ matrix.os }}
+          path: received/*
+          overwrite: true
 
   release:
     name: Release Gem
