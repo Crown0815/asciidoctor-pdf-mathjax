@@ -281,12 +281,19 @@ class AsciidoctorPDFExtensions < (Asciidoctor::Converter.for 'pdf')
       raise "No font context found for node #{node}"
     end
 
-    # noinspection RubyResolve
-    font_catalog = theme.font_catalog
-    font_file = font_catalog[font_family][font_style.to_s]
+    # asciidoctor-pdf has already resolved the font catalog - against pdf-fontsdir, the theme
+    # directory and its bundled fonts - and registered the files with Prawn. Use that file, so a
+    # path relative to the theme directory is not looked up in the working directory.
+    font_file = node.document.converter.font_families.dig(font_family, font_style.to_sym) if node.document.converter.respond_to?(:font_families)
 
-    if font_file && !font_file.include?(File::SEPARATOR)
-      font_file = File.join(node.document.attributes['pdf-fontsdir'], font_file)
+    unless font_file && File.file?(font_file)
+      # noinspection RubyResolve
+      font_catalog = theme.font_catalog
+      font_file = font_catalog[font_family][font_style.to_s]
+
+      if font_file && !font_file.include?(File::SEPARATOR)
+        font_file = File.join(node.document.attributes['pdf-fontsdir'], font_file)
+      end
     end
 
     font = TTFunk::File.open(font_file)

@@ -1,0 +1,14 @@
+extends: default
+
+# A font path relative to the theme directory, as asciidoctor-pdf resolves it without pdf-fontsdir
+font:
+  catalog:
+    merge: true
+    Roboto-Light:
+      normal: ../fonts/roboto-light.ttf
+      italic: ../fonts/roboto-light-italic.ttf
+      bold: ../fonts/roboto-medium.ttf
+      bold_italic: ../fonts/roboto-medium-italic.ttf
+
+base:
+  font-family: Roboto-Light
