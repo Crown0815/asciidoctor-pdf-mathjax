@@ -5,6 +5,7 @@
 *.pdf
 *.svg
 !*.verified.pdf
+!docs/example.pdf
 
 # Ruby gem packaging
 *.gem
