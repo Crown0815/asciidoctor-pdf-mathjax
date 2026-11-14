@@ -1,0 +1,12 @@
+extends: default
+# Tighter spacing so the README screenshot stays compact. Stem blocks reuse
+# the code padding box, so that padding is reduced on purpose.
+heading:
+  h1_font_size: 22
+  margin_bottom: 10
+prose:
+  margin_bottom: 8
+block:
+  margin_bottom: 8
+code:
+  padding: [3, 0]

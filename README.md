@@ -37,6 +37,12 @@ This extension needs no native math libraries to compile. It only needs Ruby and
 - **Docker-friendly**: Builds on the official [Asciidoctor Docker image](https://github.com/asciidoctor/docker-asciidoctor); see the example [Dockerfile](test/Dockerfile).
 - **Tested output**: Every change is checked against verified PDF baselines.
 
+## Example
+
+<img src="docs/example.png" width="600" alt="Inline and block equations rendered by asciidoctor-pdf-mathjax">
+
+*Generated from [docs/example.adoc](docs/example.adoc).*
+
 ## Installation
 
 ### Prerequisites
