@@ -16,7 +16,7 @@ jobs:
       pre-release-label: ${{ steps.determine-version.outputs.PreReleaseLabel }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
@@ -40,7 +40,7 @@ jobs:
         run: gem build *.gemspec
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           path: '*.gem'
           name: gem
@@ -54,7 +54,7 @@ jobs:
         os: [ubuntu-latest, macos-latest, windows-latest]
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
@@ -67,7 +67,7 @@ jobs:
 
       - name: Upload test artifacts (if failure)
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           path: |
             test/verification/*.received.pdf
@@ -87,7 +87,7 @@ jobs:
     steps:
       - name: Download test PDFs
         id: download
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         continue-on-error: true
         with:
           name: test-results-${{ matrix.os }}
@@ -116,7 +116,7 @@ jobs:
 
       - name: Extend test results
         if: steps.download.outcome == 'success'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: test-results-${{ matrix.os }}
           path: received/*
@@ -130,7 +130,7 @@ jobs:
 
     steps:
       - name: Download artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: gem
 
