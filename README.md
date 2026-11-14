@@ -6,22 +6,36 @@
 ![GitHub Issues](https://img.shields.io/github/issues/Crown0815/asciidoctor-pdf-mathjax)
 ![GitHub Release](https://img.shields.io/github/v/release/Crown0815/asciidoctor-pdf-mathjax)
 
-An extension for [Asciidoctor PDF](https://github.com/asciidoctor/asciidoctor-pdf) that
-integrates [MathJax](https://www.mathjax.org/) to render mathematical expressions in PDF output.
+**Beautiful LaTeX and AsciiMath equations in your Asciidoctor PDFs, rendered by MathJax 4.**
 
-This Ruby gem enhances the [asciidoctor-pdf](https://github.com/asciidoctor/asciidoctor-pdf) converter by enabling
-high-quality rendering of STEM (Science, Technology, Engineering, and Math) content
-using [MathJax](https://www.mathjax.org/).
-It processes AsciiDoc documents with mathematical notation (e.g., AsciiMath or LaTeX) and outputs them as beautifully
-formatted equations in the resulting PDF.
+`asciidoctor-pdf-mathjax` is an extension for [Asciidoctor PDF](https://github.com/asciidoctor/asciidoctor-pdf)
+that turns `stem:[...]`, `latexmath:[...]`, `asciimath:[...]` and `[stem]` blocks into crisp vector
+equations in your PDF output, using the same [MathJax](https://www.mathjax.org/) engine that renders your HTML docs.
+
+```shell
+gem install asciidoctor-pdf-mathjax
+npm install -g @mathjax/src@4 @mathjax/mathjax-tex-font@4
+asciidoctor-pdf -r asciidoctor-pdf-mathjax mathdoc.adoc
+```
+
+## Looking for an alternative to asciidoctor-mathematical?
+
+[asciidoctor-mathematical](https://github.com/asciidoctor/asciidoctor-mathematical) is now in best-effort
+legacy support, because the SVG/PNG generation it relies on is no longer maintained. Its README recommends:
+
+> Users shall consider more capable and maintained solutions such as asciidoctor-pdf-mathjax.
+
+This extension needs no native math libraries to compile. It only needs Ruby and Node.js, and it is actively maintained.
 
 ## Features
 
-- **Seamless MathJax Integration**: Converts AsciiMath and LaTeX expressions into SVG or raster images compatible with Asciidoctor PDF.
-- **Cross-Platform Support**: Works with Asciidoctor’s PDF backend to produce consistent output across platforms.
-- **Support for Inline and Block Equations**: Render both [inline](https://docs.asciidoctor.org/asciidoc/latest/stem/#inline) and [block](https://docs.asciidoctor.org/asciidoc/latest/stem/#block) STEM content effortlessly.
-- **High Quality STEM Rendering**: Utilizes MathJax’s powerful rendering engine to produce high-quality STEM content in
-  PDF output.
+- **LaTeX and AsciiMath**: Both notations work, inline and in blocks.
+- **Vector output**: Equations are embedded as SVG, so they stay sharp at any zoom level and in print.
+- **Matches your HTML output**: The same MathJax engine renders HTML and PDF, so equations look consistent across formats.
+- **Selectable math fonts**: Choose any MathJax 4 font with the `math-font` attribute (e.g. STIX2, Latin Modern, Neo-Euler).
+- **Works offline**: MathJax runs from your local npm install, with no CDN or network access during the build.
+- **Docker-friendly**: Builds on the official [Asciidoctor Docker image](https://github.com/asciidoctor/docker-asciidoctor); see the example [Dockerfile](test/Dockerfile).
+- **Tested output**: Every change is checked against verified PDF baselines.
 
 ## Installation
 
