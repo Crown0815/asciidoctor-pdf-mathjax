@@ -6,29 +6,16 @@
 
 // Rebuild the README screenshot:
 //   asciidoctor-pdf -r asciidoctor-pdf-mathjax docs/example.adoc
-//   then rasterize the PDF at 200 dpi, trim whitespace, and add a small white border.
+//   gs -dSAFER -dBATCH -dNOPAUSE -sDEVICE=png16m -dTextAlphaBits=4 -dGraphicsAlphaBits=4 -r400 -sOutputFile=raw.png docs/example.pdf
+//   then trim, Lanczos-downscale to 1200px wide (2x for a 600px README width), and add a 20px white border.
 
 Euler's identity, latexmath:[e^{i\pi} + 1 = 0], and the golden ratio
 latexmath:[\varphi = \frac{1 + \sqrt{5}}{2}] sit naturally in running text.
-
-The Gaussian integral and Maxwell's equations render as sharp vector graphics:
 
 [latexmath]
 ++++
 \int_{-\infty}^{\infty} e^{-x^2} \, dx = \sqrt{\pi}
 ++++
-
-[latexmath]
-++++
-\begin{align*}
-\nabla \cdot \mathbf{E} &= \frac{\rho}{\varepsilon_0} \\
-\nabla \cdot \mathbf{B} &= 0 \\
-\nabla \times \mathbf{E} &= -\frac{\partial \mathbf{B}}{\partial t} \\
-\nabla \times \mathbf{B} &= \mu_0\mathbf{J} + \mu_0\varepsilon_0\frac{\partial \mathbf{E}}{\partial t}
-\end{align*}
-++++
-
-AsciiMath works too, as in the Basel problem:
 
 [asciimath]
 ++++

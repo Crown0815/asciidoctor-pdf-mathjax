@@ -8,10 +8,6 @@
 
 **Beautiful LaTeX and AsciiMath equations in your Asciidoctor PDFs, rendered by MathJax 4.**
 
-![Inline and block equations rendered by asciidoctor-pdf-mathjax](docs/example.png)
-
-*Generated from [docs/example.adoc](docs/example.adoc).*
-
 `asciidoctor-pdf-mathjax` is an extension for [Asciidoctor PDF](https://github.com/asciidoctor/asciidoctor-pdf)
 that turns `stem:[...]`, `latexmath:[...]`, `asciimath:[...]` and `[stem]` blocks into crisp vector
 equations in your PDF output, using the same [MathJax](https://www.mathjax.org/) engine that renders your HTML docs.
@@ -40,6 +36,12 @@ This extension needs no native math libraries to compile. It only needs Ruby and
 - **Works offline**: MathJax runs from your local npm install, with no CDN or network access during the build.
 - **Docker-friendly**: Builds on the official [Asciidoctor Docker image](https://github.com/asciidoctor/docker-asciidoctor); see the example [Dockerfile](test/Dockerfile).
 - **Tested output**: Every change is checked against verified PDF baselines.
+
+## Example
+
+<img src="docs/example.png" width="600" alt="Inline and block equations rendered by asciidoctor-pdf-mathjax">
+
+*Generated from [docs/example.adoc](docs/example.adoc).*
 
 ## Installation
 
